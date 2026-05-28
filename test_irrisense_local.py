@@ -265,7 +265,10 @@ async def interactive_loop(conn: IrriSenseConnection):
             print(f"  Response type: {response.get('type', '?')}")
             if response.get("res") is not None:
                 print(f"  Result code: {response['res']}")
-            print(json.dumps(response.get("data", {}), indent=2, ensure_ascii=False))
+            data = response.get("data", {})
+            if "available_ids" in data:
+                data = {k: v for k, v in data.items() if k != "available_ids"}
+            print(json.dumps(data, indent=2, ensure_ascii=False))
         print()
 
 
