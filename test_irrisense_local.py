@@ -155,6 +155,7 @@ SAFE_COMMANDS = [
     ("GetSenseSwitch", None, "Get rain/weather sensor settings"),
     ("NetStat", None, "Network/connectivity status"),
     ("WrPlanOverview", None, "Get plan overview"),
+    ("_dump_plans", None, "Dump all plan details"),
     ("locationGet", None, "Get device GPS location"),
     ("Alarm", None, "Get alarm status"),
     ("GetWrPesticides", None, "Get pesticide status"),
@@ -192,6 +193,41 @@ async def dump_all_maps(conn: IrriSenseConnection):
             else:
                 print(f"    [{i:2d}] (no response)")
         print()
+
+
+WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+async def dump_all_plans(conn: IrriSenseConnection):
+    print("  Fetching plan overview...")
+    overview = await conn.send_command("WrPlanOverview")
+    if not overview or not overview.get("data"):
+        print("  No plan data available")
+        return
+
+    used = overview["data"].get("used_ids", [])
+    if not used:
+        print("  No plans configured")
+        return
+
+    print(f"  Found {len(used)} plan(s)\n")
+    for plan_id in used:
+        resp = await conn.send_command("WrPlanDetail", {"plan_id": plan_id})
+        if resp and resp.get("data"):
+            d = resp["data"]
+            mi = d.get("map_info", {})
+            wc = d.get("work_ctrl", {})
+            tc = d.get("time_ctrl", {})
+            days = ", ".join(WEEKDAYS[i - 1] for i in tc.get("weekdays", []) if 1 <= i <= 7)
+            repeat = "weekly" if tc.get("repeat_type") == 1 else f"repeat={tc.get('repeat_type')}"
+            enabled = "ON" if d.get("enabled") else "OFF"
+            print(f"  Plan {plan_id}: {mi.get('name', '?')} [{enabled}]")
+            print(f"    Schedule: {days} at {tc.get('start_time', '?')} ({repeat})")
+            print(f"    Depth: {wc.get('depth', 0):.2f}  Point time: {wc.get('point_time', '?')} min")
+            print(f"    Est. runtime: {d.get('estimated_time', '?')} min")
+        else:
+            print(f"  Plan {plan_id}: (no response)")
+    print()
 
 
 def print_menu():
@@ -257,6 +293,9 @@ async def interactive_loop(conn: IrriSenseConnection):
 
         if cmd_type == "_dump_maps":
             await dump_all_maps(conn)
+            continue
+        if cmd_type == "_dump_plans":
+            await dump_all_plans(conn)
             continue
 
         print(f"  Sending: {cmd_type} {json.dumps(cmd_data) if cmd_data else ''}")

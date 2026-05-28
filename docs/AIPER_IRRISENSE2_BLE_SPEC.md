@@ -421,15 +421,91 @@ The app retries each point upload up to **10 times** on failure.
 | `enabled` | int | `0` = disable, `1` = enable |
 | `repeat` | int | Current repeat setting (preserved from the task) |
 
-### Plan Management (newer firmware)
+### Plan Management (V3.8.6+ — replaces WRWeekdayTask commands)
 
 | Command | Direction | Parameters | Description |
 |---------|-----------|------------|-------------|
-| `WrPlanOverview` | Query | none | Get overview of all plans |
-| `WrPlanDetail` | Query | plan id | Get details of a specific plan |
-| `WrPlanConfig` | Set | plan config | Configure an irrigation plan |
+| `WrPlanOverview` | Query | none | Get used/available plan IDs (up to 40 slots) |
+| `WrPlanDetail` | Query | `{"plan_id": <int>}` | Get full details of a specific plan |
+| `WrPlanConfig` | Set | see [Plan Config](#plan-config-wrplanconfig) | Create/edit an irrigation plan |
 | `WrPlanBatchEdit` | Set | batch data | Batch edit multiple plans |
 | `WrPlanBatchDelete` | Set | batch ids | Batch delete plans |
+
+#### WrPlanOverview Response (confirmed V3.8.6)
+
+```json
+{
+  "used_ids": [1],
+  "available_ids": [2, 3, ...],
+  "total_used": 1,
+  "total_available": 39
+}
+```
+
+#### WrPlanDetail Response (confirmed V3.8.6)
+
+```json
+{
+  "plan_id": 1,
+  "work_type": 0,
+  "plan_used_total": 1,
+  "map_info": {
+    "name": "Rhodo",
+    "type": 0,
+    "id": 3
+  },
+  "work_ctrl": {
+    "depth": 0.4,
+    "point_time": 1
+  },
+  "time_ctrl": {
+    "start_time": "08:00",
+    "repeat_type": 1,
+    "weekdays": [1, 3, 5]
+  },
+  "enabled": true,
+  "estimated_time": 25
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `plan_id` | int | Plan slot ID (1-40) |
+| `work_type` | int | Work type (0 = normal) |
+| `plan_used_total` | int | Total plans in use |
+| `map_info.name` | string | Zone name |
+| `map_info.type` | int | Map type |
+| `map_info.id` | long | Map ID |
+| `work_ctrl.depth` | float | Water depth target (inches) |
+| `work_ctrl.point_time` | int | Time per point (minutes) |
+| `time_ctrl.start_time` | string | Start time `"HH:MM"` |
+| `time_ctrl.repeat_type` | int | `1` = repeat weekly |
+| `time_ctrl.weekdays` | list[int] | Days of week (1=Mon, 7=Sun) |
+| `enabled` | bool | Whether plan is active |
+| `estimated_time` | int | Estimated runtime (minutes) |
+
+#### Plan Config (WrPlanConfig)
+
+From decompiled app — used to create/edit plans:
+
+```json
+{
+  "plan_id": 1,
+  "type": 0,
+  "work_type": 0,
+  "map_id": 3,
+  "work_ctrl": {
+    "water_depth": 0.4,
+    "point_time": 1
+  },
+  "time_ctrl": {
+    "start_time": "08:00",
+    "weekdays": [1, 3, 5],
+    "repeat_type": 1
+  },
+  "enabled": true
+}
+```
 
 ### Weather/Sensor Integration
 
