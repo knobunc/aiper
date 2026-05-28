@@ -171,22 +171,18 @@ Inbound:  strip "\n" -> Base64 decode -> XOR([0x12,0x34,0x56,0x78]) -> JSON
 
 #### setWorkMode
 
-**Basic form** (simple start/stop):
+**WARNING:** Do NOT send `setWorkMode` without a `map_id`. Tested on V3.8.6: starting without a zone causes garbage `map_id` (134218851), map anomaly errors, and a glitched device state that's hard to stop. Always use the full form with a valid `map_id`.
+
+**Stop:**
 
 ```json
-{"mode": 0, "status": 1}
+{"mode": 0, "status": 0}
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `mode` | int | Work mode: `0` = normal irrigation, `3` = vegetation mode |
-| `status` | int | `0` = stop, `1` = start |
-| `waterYeild` | float | (Optional) Water yield rate. **Note: field name is misspelled in firmware** |
-
-**Convenience methods in the app:**
-- **Start normal:** `{"mode": 0, "status": 1, "waterYeild": <float>}` (waterYeild optional)
-- **Stop:** `{"mode": 0, "status": 0}`
-- **Vegetation mode:** `{"mode": 3, "status": 1}`
+**Also try `WrControl` to stop:**
+```json
+{"cmd": 0}
+```
 
 **Full form** (start with zone/map selection):
 
