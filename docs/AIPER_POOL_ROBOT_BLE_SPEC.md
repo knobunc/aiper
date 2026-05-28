@@ -3,6 +3,7 @@
 **Reverse-engineered from:** Aiper Android App v3.3.2 (com.aiper.link)
 **Date:** 2026-05-28
 **Purpose:** Reference for Home Assistant integration via BLE proxies
+**Scope:** Pool robot devices (Surfers, Scubas, X-series). For irrigation devices, see `AIPER_IRRISENSE2_BLE_SPEC.md`.
 
 ---
 
@@ -134,11 +135,8 @@ Notify:   dfd4416e-1810-47f7-8248-eb8be3dc47f9
 
 ### Group 3: Nordic UART Service (Irrigation devices)
 
-```
-Service:  6e400001-b5a3-f393-e0a9-e50e24dcca9e
-Write:    6e400002-b5a3-f393-e0a9-e50e24dcca9e  (NUS RX)
-Notify:   6e400003-b5a3-f393-e0a9-e50e24dcca9e  (NUS TX)
-```
+> **See `AIPER_IRRISENSE2_BLE_SPEC.md` for full irrigation device documentation.**
+> Irrigation devices (WR, IrriSenseSE) use a different protocol variant (no CRC, 152-byte chunks, X9 command format) and are fully covered in the dedicated spec.
 
 | DeviceType | Models | SN Prefixes |
 |------------|--------|-------------|
@@ -171,9 +169,9 @@ Notify:   4a5ad444-2537-11ee-be56-0242ac120002  (same as service)
 
 ### Series Groupings
 
-- **X9Series:** X9, ScubaX1Pro, WR, X30, X30SE, IrriSenseSE
+- **X9Series:** X9, ScubaX1Pro, X30, X30SE (plus WR/IrriSenseSE — see dedicated spec)
 - **Surfers:** S1, S2, SurferB30
-- **IrriSenses:** WR, IrriSenseSE (use NUS UUIDs, smaller chunk size)
+- **IrriSenses:** WR, IrriSenseSE — see `AIPER_IRRISENSE2_BLE_SPEC.md`
 
 ---
 
@@ -297,7 +295,7 @@ def ecdh_decrypt(base64_data, shared_key_16):
 2. Encrypt (XOR or ECDH depending on protocol)
 3. Base64-encode the encrypted bytes
 4. Append `"\n"` as message terminator
-5. Split into chunks of max 200 bytes (152 for irrigation devices)
+5. Split into chunks of max 200 bytes
 6. Write each chunk sequentially to the write characteristic
 
 ```
@@ -338,8 +336,7 @@ BLE notification bytes
 
 | Parameter | Value |
 |-----------|-------|
-| Max chunk size (general) | 200 bytes |
-| Max chunk size (irrigation) | 152 bytes |
+| Max chunk size | 200 bytes |
 | Message terminator | `"\n"` (newline, 0x0A) |
 | Retry on error code -3 | After 200ms delay |
 
@@ -592,112 +589,14 @@ This section documents how the app provisions WiFi credentials to a device over 
 
 ---
 
-## 11. Cloud Transport (MQTT & REST)
+## 11. Cloud Transport
 
-The Aiper app communicates with devices through three transports, selectable via `CmdLinkType`: `BLUETOOTH`, `TCP`, and `MQTT`. The same JSON command protocol (XOR-encrypted, Base64-encoded) is used across all transports.
+See `AIPER_NETWORK_API_SPEC.md` for full cloud transport documentation (REST API, AWS IoT MQTT, authentication).
 
-### MQTT via AWS IoT Core
-
-The primary cloud transport. Commands sent over MQTT use the exact same encryption and JSON format as BLE.
-
-#### MQTT Topics
-
-| Topic | Direction | Description |
-|-------|-----------|-------------|
-| `aiper/things/{sn}/downChan` | App → Device | Command channel (publish) |
-| `aiper/things/{sn}/upChan` | Device → App | Response channel (subscribe) |
-| `aiper/things/{sn}/app/report` | Device → App | X9 Series status reports |
-| `aiper/things/{sn}/shadow/report` | Device → App | Non-X9 status reports |
-| `$aws/things/{sn}/shadow/get/accepted` | AWS → App | Shadow query response |
-| `$aws/things/{sn}/shadow/update` | App → AWS | Shadow state update |
-| `$aws/things/{sn}/shadow/update/accepted` | AWS → App | Shadow update confirmation |
-
-`{sn}` is the device serial number.
-
-#### Authentication Flow
-
-1. App authenticates to Aiper REST API (email/password → JWT token)
-2. App calls `api.getOpenIdToken()` to get AWS credentials:
-   - `identityId` — Cognito Identity ID (also used as MQTT client ID)
-   - `identityPoolId` — Cognito Identity Pool ID
-   - `token` — OpenID Connect token
-   - `iotEndpoint` — AWS IoT Core endpoint (`{account-id}.iot.{region}.amazonaws.com`)
-   - `region` — AWS region
-3. App creates `CognitoCachingCredentialsProvider` with `DeveloperProvider`
-4. App connects `AWSIotMqttManager(clientId=identityId, endpoint=iotEndpoint)` with Cognito credentials
-5. MQTT connection uses AWS SigV4 authentication
-
-#### Multi-Session Limitation
-
-**The MQTT client ID is the Cognito Identity ID (per-user).** AWS IoT Core only allows one connection per client ID (MQTT 3.1.1 spec). A second connection from the same user account will disconnect the first.
-
-This means a Home Assistant integration using MQTT cannot coexist with the official Aiper app on the same user account. Workarounds:
-- Use a separate Aiper account and share the device to it (if supported)
-- Use BLE transport instead (no concurrency conflict)
-
-#### MQTT Connection Parameters
-
-| Parameter | Value |
-|-----------|-------|
-| Keep-alive | 60 seconds |
-| Reconnect retry limits | 5 attempts |
-| Max auto-reconnect | Unlimited (-1) |
-| QoS | Standard MQTT QoS levels |
-
-### REST API
-
-The app uses a Retrofit 2 REST API for account management, device registration, and metadata. The base URL is dynamically configured via `BaseConstant.SERVICE_ADDRESS`.
-
-#### Known Base URLs
-
-| Environment | URL |
-|-------------|-----|
-| Production (Global) | `https://policy.aiper.com/` |
-| Production (China) | `https://policy.aiper.com.cn/` |
-| Test | `https://bg-test.aipervip.com/` |
-| Dev | `https://admin.aipervip.com:30080/` |
-
-#### Key REST Endpoints
-
-**Authentication:**
-- `checkEmail` — Check if email is registered
-- `sendEmail` / `sendEmailExpire` — Send verification email
-- `registerByCode` — Register new account
-- `forgetPwd` — Password reset
-- `users/current` — Get current user
-- `users/token/refresh` — Refresh JWT token
-
-**Device Management:**
-- `equipment/existEquipment` — Check if device exists
-- `equipment/registerEquipmentToAWS` — Register device to AWS IoT
-- `equipment/insertEquipment` — Add device to account
-- `equipment/getEquipment` — List user's devices
-- `equipment/setName` — Rename device
-- `equipment/checkEquipmentOnlineStatus` — Check device online status
-
-**Device Models:**
-- `equipmentModel/getList` — Get equipment model list
-- `equipmentModel/getAll` — Get all models
-
-**OTA / Support:**
-- `support/v1/checkAppVersion` — Check for app updates
-- `support/v1/productVerification` — Verify product authenticity
-- `support/v1/queryWarrantyPeriod` — Warranty info
-
-**IrriSense Irrigation Records (WrApiService):**
-- `wr/wateringRecordStatisticsV2` — Summary stats: total run count, total gallons, water savings
-- `wr/getWateringRecordHistoryDataV2` — Paginated history: area, duration, water consumption per run
-- `wr/batchWateringRecordReportV2` — Upload device-synced records to cloud
-
-#### REST Authentication
-
-- Token-based: JWT via `users/token/refresh`
-- HTTP interceptors inject auth headers on all requests
-- 30-second connect/read timeouts
-
-### Local HTTP (Limited)
-
-A local HTTP endpoint exists at `http://192.168.4.1:8001/GetCleanRecord` — this is the device's AP-mode address (used during WiFi setup). Not useful for normal operation.
+Key facts for BLE integration developers:
+- The same JSON command protocol (XOR/ECDH encrypted) works over BLE, MQTT, and TCP
+- BLE is recommended for HA integrations to avoid the MQTT single-session limitation
+- Cloud REST APIs are needed for irrigation history records and account management
 
 ---
 
@@ -759,7 +658,6 @@ BLE control via HA Bluetooth proxies is **highly viable**. The protocol is strai
 - **ECDH handshake:** Newer devices (X9, X30, ScubaX1Pro, X30SE) require the ECDH key exchange before commands work. The exact BLE command type for sending the public key needs to be determined empirically.
 - **ScubaT30 anomaly:** All three UUIDs point to the service UUID, which is unusual. May need special handling.
 - **CRC validation:** Devices may reject commands without a valid CRC16-Modbus checksum.
-- **IrriSense devices:** Use Nordic UART Service UUIDs and smaller chunk size (152 bytes). Skip CRC.
 - **State subscriptions:** Use `sendAndSubscribe` pattern for continuous state updates rather than polling.
 
 ### Example: Start Cleaning (Python pseudocode)
@@ -803,7 +701,7 @@ def build_command(cmd_type: str, data: dict = None, x9_series: bool = False) -> 
 
 # Start cleaning
 message = build_command("FastTask")
-# Split into 200-byte chunks and write to BLE characteristic
+# Split into 200-byte chunks and write to BLE
 for i in range(0, len(message), 200):
     chunk = message[i:i+200]
     await ble_client.write_gatt_char(WRITE_UUID, chunk)

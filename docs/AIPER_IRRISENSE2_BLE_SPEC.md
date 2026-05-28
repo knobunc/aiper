@@ -616,11 +616,73 @@ Irrigation history uses a **hybrid BLE + cloud** architecture. The app syncs rec
 |---------|-----------|------------|-------------|
 | `WrDrainExit` | Set | `{"type": <int>}` | Control winter drainage mode |
 
-### Alarm
+### Alarm & Abnormal Events
 
 | Command | Direction | Parameters | Description |
 |---------|-----------|------------|-------------|
-| `Alarm` | Query/Subscribe | none | Get/subscribe to alarm notifications |
+| `Alarm` | Query/Subscribe | none | Get alarm status (`warnCode` bitmask) |
+| `AbnormalReminder` | Unsolicited | none | Device pushes abnormal events |
+
+#### AbnormalReminder (unsolicited notification)
+
+The device auto-pushes `AbnormalReminder` when abnormal conditions are detected. This is **not** a response to a command — it arrives unsolicited on the NUS TX characteristic.
+
+```json
+{
+  "hydropenia": {"status": 1, "ts": 1716912345},
+  "rain": {"status": 1, "ts": 1716912345},
+  "liquid": {"status": 1, "ts": 1716912345}
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `hydropenia` | object | Water shortage event |
+| `rain` | object | Rain detected event |
+| `liquid` | object | Pesticide liquid abnormal event |
+| `*.status` | int | `1` = event active |
+| `*.ts` | long | Unix timestamp (seconds) of detection |
+
+The app reports rain events to the cloud via `WrApi.rainReport()` and water shortage via `WrApi.waterShortageReport()`.
+
+#### Rain Delay Behavior
+
+There is no single "is rain delay active?" query command. Rain status is determined from multiple sources:
+
+1. **`GetSenseSwitch`** — whether rain/weather sensors are *enabled* (settings, not active state)
+2. **`Alarm`** — `warnCode` bitmask may indicate active rain detection
+3. **`AbnormalReminder`** — pushed when rain is detected (see above)
+4. **`workInfo`** — polling during scheduled runs will show `status: 0` if rain caused a skip
+
+For HA integration, poll `Alarm` and `workInfo` on each cycle. Rain detection can be inferred from `AbnormalReminder` if a persistent connection is held, or from `Alarm` warnCode on the next poll.
+
+### Irrigation Record Stop Reasons
+
+The `taskStatus` field in irrigation records indicates how a run ended:
+
+| Code | Status | Description |
+|------|--------|-------------|
+| 1 | Completed | Normal completion |
+| 2 | Fault | Hardware/system fault |
+| 3 | Weather wind | Stopped due to weather wind detection |
+| 4 | Weather rain | Stopped due to weather rain detection |
+| 5 | Rain sensor | Stopped due to physical rain sensor |
+| 6 | Overlap | Task overlap conflict |
+| 7 | Manual stop | User manually stopped |
+| 8 | Water shortage | Water supply insufficient |
+| 9 | Manual task | Manual task override |
+| 10 | Conflict | Schedule conflict |
+
+### Task Skip Records
+
+The device tracks skipped scheduled tasks via a skip record model:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `taskId` | long | Scheduled task ID |
+| `planId` | int | Plan ID |
+| `skipTaskUtcTimestampSecond` | long | UTC timestamp of skip |
+| `skipType` | int | Reason for skip (maps to stop reason codes above) |
 
 ---
 
@@ -700,35 +762,13 @@ Queried via `workInfo` command:
 | `repairLayer` | int | Repair layer indicator |
 | `plan_id` | int | Plan ID (0 = manual start, >0 = scheduled plan) |
 
-**Important for integration:** These notifications arrive on the same NUS TX characteristic as command responses. The integration must distinguish unsolicited notifications from command response by matching the response `type` field against the pending command. Any unmatched notification is an unsolicited event.
+**Important for integration:** These notifications arrive on the same NUS TX characteristic as command responses. The integration must distinguish unsolicited notifications from command responses. Known unsolicited types: `realTimeProgress`, `AbnormalReminder`, `Alarm`. Any response whose `type` doesn't match the pending command should be treated as an unsolicited event.
 
 ---
 
-## 6. Home Assistant Entity Mapping
+## 6. Home Assistant Integration
 
-### Recommended Entities
-
-| HA Entity Type | Command(s) | Description |
-|---------------|------------|-------------|
-| `switch.irrigation` | `setWorkMode`, `WrControl` | Start/stop irrigation |
-| `sensor.work_status` | `workInfo` subscribe | Current operation status |
-| `sensor.water_yield` | `getWaterYield` | Current water output rate |
-| `number.weekly_water_depth` | `getWeekWaterYield` / `setWeekWaterYield` | Weekly watering target |
-| `select.nozzle_type` | `getNozzle` / `setNozzle` | Active nozzle configuration |
-| `switch.rain_sensor` | `GetSenseSwitch` / `SetSenseSwitch` | Rain delay feature |
-| `binary_sensor.alarm` | `Alarm` subscribe | Active alarms |
-| `sensor.device_info` | `DevInfo` | Firmware version, model |
-| `calendar.schedule` | `getWRWeekdayTaskList` | Irrigation schedule |
-| `button.skip_task` | `WRWeekdayTaskSkip` | Skip next scheduled run |
-| `switch.winter_mode` | `WrDrainExit` | Winter drainage mode |
-
-### Potential Additional Entities (if features present)
-
-| HA Entity Type | Command(s) | Description |
-|---------------|------------|-------------|
-| `sensor.location` | `locationGet` | Device GPS coordinates |
-| `switch.pesticide` | `GetWrPesticides` | Chemical dosing status |
-| `sensor.watering_progress` | `realTimeProgress` | Live watering progress |
+See `HA_INTEGRATION_PROPOSAL.md` for the full integration architecture, entity catalog, and implementation plan.
 
 ---
 
@@ -959,7 +999,7 @@ class IrriSenseNotificationHandler:
 
 ## Appendix A: Cloud Transport (MQTT)
 
-The IrriSense 2 also communicates via AWS IoT MQTT using the same XOR-encrypted JSON protocol as BLE. See `AIPER_BLE_API_SPEC.md` Section 11 for full details.
+The IrriSense 2 also communicates via AWS IoT MQTT using the same XOR-encrypted JSON protocol as BLE. See `AIPER_POOL_ROBOT_BLE_SPEC.md` Section 11 for full details.
 
 **Key facts for IrriSense:**
 - Command topic: `aiper/things/{sn}/downChan`
