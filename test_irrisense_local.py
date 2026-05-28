@@ -104,13 +104,19 @@ class IrriSenseConnection:
         print("  Subscribing to NUS TX notifications...")
         await self.client.start_notify(NUS_TX_UUID, self._on_notify)
 
+    UNSOLICITED_TYPES = {"realTimeProgress", "AbnormalReminder", "Alarm"}
+
     def _on_notify(self, sender, data: bytearray):
         self._buffer.extend(data)
         if self._buffer.endswith(b"\n"):
             try:
                 response = parse_response(bytes(self._buffer))
-                self._last_response = response
-                self._response_event.set()
+                if response.get("type") in self.UNSOLICITED_TYPES:
+                    print(f"\n  [unsolicited] {response.get('type')}: "
+                          f"{json.dumps(response.get('data', {}), indent=2)}")
+                else:
+                    self._last_response = response
+                    self._response_event.set()
             except Exception as e:
                 print(f"\n  [notify] Failed to parse response: {e}")
                 print(f"  [notify] Raw buffer ({len(self._buffer)} bytes): {self._buffer!r}")
