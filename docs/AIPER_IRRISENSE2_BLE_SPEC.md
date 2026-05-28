@@ -638,20 +638,69 @@ The IrriSense reports state through the same Shadow model as pool robots. Key fi
 | `warn_code` | string | Warning code details |
 | `link` | int | Connectivity status |
 
-### Work Info State
+### Work Info State (confirmed V3.8.6)
 
-Queried via `workInfo` command, provides:
-- Current watering zone
-- Progress through schedule
-- Time remaining
-- Water volume dispensed
+Queried via `workInfo` command:
 
-### Real-Time Status
+```json
+{
+  "status": 0,
+  "valve": 47,
+  "rotate": 0,
+  "waterpress": 101.99
+}
+```
 
-Subscribed via `realtimeStatus` and `realTimeProgress` for live updates during operation:
-- Sprinkler head position/angle
-- Zone being watered
-- Real-time water flow
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | int | `0` = idle, `1` = running |
+| `valve` | int | Current valve number |
+| `rotate` | int | Sprinkler rotation angle |
+| `waterpress` | float | Water pressure (PSI) |
+
+### Real-Time Progress (confirmed V3.8.6)
+
+**The device auto-pushes `realTimeProgress` notifications during irrigation** — these are unsolicited and arrive independently of any command sent. They contain rich operational data:
+
+```json
+{
+  "status": 1,
+  "mode": 0,
+  "task_type": 1,
+  "map_info": {
+    "name": "Rhodo",
+    "type": 0,
+    "id": 3
+  },
+  "waterYield": 0.25,
+  "point_time": 99,
+  "progress": 0,
+  "time": 6,
+  "hydropenia": false,
+  "x": -288,
+  "y": 1123,
+  "repairLayer": 0,
+  "plan_id": 0
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | int | `0` = stopped, `1` = running |
+| `mode` | int | Work mode (0 = normal) |
+| `task_type` | int | Task type (1 = manual start) |
+| `map_info` | object | Active zone: name, type, id |
+| `waterYield` | float | Water yield rate |
+| `point_time` | int | Time per point |
+| `progress` | int | Completion progress |
+| `time` | int | Elapsed time (seconds) |
+| `hydropenia` | bool | Water deficiency detected |
+| `x` | int | Sprinkler X position |
+| `y` | int | Sprinkler Y position |
+| `repairLayer` | int | Repair layer indicator |
+| `plan_id` | int | Plan ID (0 = manual start, >0 = scheduled plan) |
+
+**Important for integration:** These notifications arrive on the same NUS TX characteristic as command responses. The integration must distinguish unsolicited notifications from command response by matching the response `type` field against the pending command. Any unmatched notification is an unsolicited event.
 
 ---
 
