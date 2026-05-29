@@ -147,18 +147,44 @@ A synthetic switch that enables or disables all plans at once. There is no nativ
 - **State:** ON if any plan is enabled, OFF if all plans are disabled
 - **Use case:** Vacation mode, seasonal shutdown, or quick disable before maintenance
 
-### Buttons
+### Actions (modeled after `vacuum` entity actions)
 
-| Entity ID | Name | Command | Notes |
-|-----------|------|---------|-------|
-| `button.irrisense_stop` | Stop Irrigation | `setWorkMode` mode=0, status=0 | Emergency stop |
+Actions mirror the [vacuum integration's action list](https://www.home-assistant.io/integrations/vacuum/#list-of-actions) where applicable.
 
-### Services
+| Action | Vacuum Equivalent | Command | Description |
+|--------|-------------------|---------|-------------|
+| `aiper.start` | `vacuum.start` | `setWorkMode` mode=1, status=1 | Start or resume irrigation |
+| `aiper.stop` | `vacuum.stop` | `setWorkMode` mode=0, status=0 | Stop current irrigation |
+| `aiper.pause` | `vacuum.pause` | `setWorkMode` mode=0, status=0 | Pause irrigation (device treats as stop) |
+| `aiper.water_area` | `vacuum.clean_area` | `setWorkMode` per segment | Irrigate specific zones via area mapping |
+| `aiper.turn_on` | `vacuum.turn_on` | `WrPlanBatchEdit` enable all | Enable all schedules |
+| `aiper.turn_off` | `vacuum.turn_off` | `WrPlanBatchEdit` disable all | Disable all schedules |
+| `aiper.toggle` | `vacuum.toggle` | — | Toggle between turn_on / turn_off |
+| `aiper.send_command` | `vacuum.send_command` | any | Send a raw BLE command (for advanced use / debugging) |
 
-| Service | Parameters | Command | Notes |
-|---------|-----------|---------|-------|
-| `aiper.water_area` | `segment_ids` (list of zone IDs) | `setWorkMode` | Irrigate specific zones |
-| `aiper.stop` | — | `setWorkMode` mode=0, status=0 | Stop current irrigation |
+**Not applicable** (no irrigation equivalent):
+
+| Vacuum Action | Reason |
+|---------------|--------|
+| `vacuum.return_to_base` | No dock — device is stationary |
+| `vacuum.clean_spot` | No equivalent — zones are pre-mapped |
+| `vacuum.locate` | No buzzer/LED confirmed in protocol |
+| `vacuum.set_fan_speed` | Water pressure is read-only (sensor, not controllable) |
+| `vacuum.start_pause` | Deprecated in favor of separate `start` / `pause` |
+
+#### Entity Feature Flags
+
+```python
+class IrriSenseEntityFeature(IntFlag):
+    START = 1
+    STOP = 2
+    PAUSE = 4
+    WATER_AREA = 8
+    TURN_ON = 16
+    TURN_OFF = 32
+    TOGGLE = 64
+    SEND_COMMAND = 128
+```
 
 #### Zone Segments (modeled after `vacuum.clean_area`)
 
@@ -174,12 +200,12 @@ class IrriSenseSegment:
 
 **Integration methods:**
 
-| Method | Description |
-|--------|-------------|
-| `async_get_segments()` | Returns current zones from cached `WrMapManageOverView` data |
-| `async_water_segments(segment_ids)` | Sends `setWorkMode` for each zone ID |
-| `last_seen_segments` | Zones at last area mapping — detects zone re-mapping |
-| `async_create_segments_issue()` | Creates repair issue when zones change |
+| Method | Vacuum Equivalent | Description |
+|--------|-------------------|-------------|
+| `async_get_segments()` | `async_get_segments()` | Returns current zones from cached `WrMapManageOverView` data |
+| `async_water_segments(segment_ids)` | `async_clean_segments(segment_ids)` | Sends `setWorkMode` for each zone ID |
+| `last_seen_segments` | `last_seen_segments` | Zones at last area mapping — detects zone re-mapping |
+| `async_create_segments_issue()` | `async_create_segments_issue()` | Creates repair issue when zones change |
 
 **Segment → HA Area mapping:** Users map IrriSense zones to HA Areas in the UI (Settings > Devices > Entities > "Map irrigation zones to areas"). Once mapped, `aiper.water_area` can be called targeting an `area_id` and the integration resolves it to the correct zone segment ID.
 
