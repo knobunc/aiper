@@ -323,6 +323,16 @@ Track the Water Pressure sensor and Water Flow binary sensor to monitor your irr
 
 Use the start/stop services in automations or scripts to control irrigation from anywhere through Home Assistant's remote access. Useful for starting a quick watering session while away from home.
 
+## Supported Devices
+
+The integration auto-discovers devices via BLE advertisements matching these patterns:
+
+- `Aiper-WR-*`
+- `Aiper_WR_*`
+- `Aiper-IrriSense*`
+
+Currently tested with the **Aiper IrriSense 2** irrigation controller. Other Aiper irrigation controllers using the same BLE protocol may also work.
+
 ## Known Limitations
 
 - **BLE Range**: Bluetooth Low Energy has a typical range of approximately 30 feet (10 meters). The Home Assistant host must be within BLE range of the IrriSense controller. Walls and other obstacles reduce effective range.
