@@ -213,6 +213,7 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
 
     async def _discover_zones_and_plans(self, client: IrriSenseClient) -> None:
         overview = await client.send_command("WrMapManageOverView")
+        _LOGGER.debug("WrMapManageOverView: %s", overview)
         if overview and overview.get("data"):
             map_list = overview["data"]
             if isinstance(map_list, dict):
@@ -228,6 +229,7 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
             ]
 
         plan_overview = await client.send_command("WrPlanOverview")
+        _LOGGER.debug("WrPlanOverview: %s", plan_overview)
         if not plan_overview or not plan_overview.get("data"):
             return
 
@@ -236,7 +238,10 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
         plans: list[IrriSensePlan] = []
 
         for plan_id in used_ids:
-            detail = await client.send_command("WrPlanDetail", {"plan_id": plan_id})
+            detail = await client.send_command(
+                "WrPlanDetail", {"plan_id": plan_id}
+            )
+            _LOGGER.debug("WrPlanDetail %d: %s", plan_id, detail)
             if not detail or not detail.get("data"):
                 continue
             d = detail["data"]
@@ -261,6 +266,14 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
             )
 
         self._state.plans = plans
+        _LOGGER.debug(
+            "Discovered %d plans: %s",
+            len(plans),
+            [
+                (p.plan_id, p.name, p.enabled, p.start_time, p.weekdays)
+                for p in plans
+            ],
+        )
 
         new_plan_ids = {p.plan_id for p in plans}
         if new_plan_ids != old_plan_ids and self._plan_update_callback:
