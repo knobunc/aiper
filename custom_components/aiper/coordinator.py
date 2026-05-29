@@ -28,6 +28,18 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
+class IrriSensePoint:
+    """A single waypoint within a zone."""
+
+    x: int
+    y: int
+    valve: int
+    rotate: int
+    water_pressure: float
+    num: int
+
+
+@dataclass
 class IrriSenseZone:
     """A zone/map region on the device."""
 
@@ -35,6 +47,7 @@ class IrriSenseZone:
     name: str
     type: int
     point_total: int
+    points: list[IrriSensePoint] = field(default_factory=list)
 
 
 @dataclass
@@ -268,6 +281,8 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
                 for m in map_list
             ]
 
+        await self._fetch_zone_points(client)
+
         plan_overview = await client.send_command("WrPlanOverview")
         _LOGGER.debug("WrPlanOverview: %s", plan_overview)
         if not plan_overview or not plan_overview.get("data"):
@@ -318,6 +333,34 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
         new_plan_ids = {p.plan_id for p in plans}
         if new_plan_ids != old_plan_ids and self._plan_update_callback:
             self._plan_update_callback()
+
+    async def _fetch_zone_points(self, client: IrriSenseClient) -> None:
+        """Fetch individual waypoints for each zone."""
+        for zone in self._state.zones:
+            points: list[IrriSensePoint] = []
+            for i in range(zone.point_total):
+                resp = await client.send_command(
+                    "WrMapManageSingleInfo",
+                    {"id": zone.id, "type": zone.type, "point_index": i},
+                )
+                if resp and resp.get("data"):
+                    pt = resp["data"].get("point_info", {})
+                    points.append(
+                        IrriSensePoint(
+                            x=pt.get("x", 0),
+                            y=pt.get("y", 0),
+                            valve=pt.get("valve", 0),
+                            rotate=pt.get("rotate", 0),
+                            water_pressure=pt.get("waterpress", 0.0),
+                            num=pt.get("num", i),
+                        )
+                    )
+            zone.points = points
+        _LOGGER.debug(
+            "Fetched points for %d zones: %s",
+            len(self._state.zones),
+            [(z.name, len(z.points)) for z in self._state.zones],
+        )
 
     async def _fetch_location(self, client: IrriSenseClient) -> None:
         loc = await client.send_command("locationGet")
