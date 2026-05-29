@@ -15,6 +15,8 @@ Communicates directly with the device over Bluetooth Low Energy using the Nordic
   - Use Rain Sensor, Use Rain Forecast, Use Wind Forecast (sense settings)
   - Per-plan schedule enable/disable (dynamically created as plans are added)
   - All Schedules master switch
+- **Zone map**: rendered image entity showing irrigation zones, waypoints, and live sprinkler position
+- **Map rotation**: number entity to align the device's coordinate system with compass north
 - **Services**: start/stop/pause irrigation, water specific zones, enable/disable schedules, send raw BLE commands
 - **Auto-discovery** via BLE advertisement matching
 - **Connect-poll-disconnect** pattern — does not block the Aiper phone app

@@ -216,6 +216,22 @@ Send a raw BLE command to the device. For advanced users and debugging.
 | command | Yes | BLE command name (e.g., DevInfo, workInfo) |
 | data | No | Optional JSON data for the command |
 
+## Zone Map
+
+The integration provides a rendered image entity (`image.irrisense_zone_map`) that displays your irrigation zones as a map, similar to robot vacuum integrations. The map shows:
+
+- **Zone waypoints** — colored circles connected by lines showing the watering path for each zone
+- **Zone labels** — zone names positioned at the centroid of each zone's points
+- **Device origin** — a crosshair marker at the controller's (0, 0) position
+- **Live sprinkler position** — a red dot showing the current sprinkler location during irrigation
+- **Legend** — zone names with their assigned colors
+
+The map updates each poll cycle. During irrigation, the live position dot tracks the sprinkler in real time.
+
+### Map Rotation
+
+The device uses an internal coordinate system that has no inherent compass heading. A **Map Rotation** number entity (`number.irrisense_map_rotation`) lets you set the device's heading angle (0–359°) so the rendered map aligns with north or your preferred orientation. Adjust the slider until the map matches your yard layout.
+
 ## Automation Examples
 
 ### Stop irrigation when rain is detected
