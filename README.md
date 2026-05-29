@@ -4,7 +4,7 @@ A [Home Assistant](https://www.home-assistant.io/) custom integration for the [A
 
 Communicates directly with the device over Bluetooth Low Energy using the Nordic UART Service — no cloud, no hub, fully local.
 
-**Integration Quality Scale: Silver** — see [quality_scale.yaml](custom_components/aiper/quality_scale.yaml) for details.
+**Integration Quality Scale: Platinum** — see [quality_scale.yaml](custom_components/aiper/quality_scale.yaml) for details. Full documentation at [docs/integration.md](docs/integration.md).
 
 ## Features
 

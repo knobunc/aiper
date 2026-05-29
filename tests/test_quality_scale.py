@@ -217,6 +217,57 @@ class TestGoldRules:
         )
         assert "bluetooth" in manifest
 
+    def test_diagnostics(self):
+        rules = _load_rules()
+        assert _rule_status(rules, "diagnostics") == "done"
+        tree = _parse_module("diagnostics.py")
+        assert _has_function(tree, "async_get_config_entry_diagnostics")
+
+    def test_discovery_update_info(self):
+        rules = _load_rules()
+        assert _rule_status(rules, "discovery-update-info") == "done"
+        source = (INTEGRATION / "config_flow.py").read_text()
+        assert "_abort_if_unique_id_configured(" in source
+        assert "updates=" in source
+
+    def test_entity_disabled_by_default(self):
+        rules = _load_rules()
+        assert _rule_status(rules, "entity-disabled-by-default") == "done"
+        source = (INTEGRATION / "sensor.py").read_text()
+        assert "entity_registry_enabled_default=False" in source
+
+    def test_exception_translations(self):
+        rules = _load_rules()
+        assert _rule_status(rules, "exception-translations") == "done"
+        import json
+        strings = json.loads(
+            (INTEGRATION / "strings.json").read_text()
+        )
+        assert "exceptions" in strings
+        coord_src = (INTEGRATION / "coordinator.py").read_text()
+        assert "translation_key=" in coord_src
+        init_src = (INTEGRATION / "__init__.py").read_text()
+        assert "translation_key=" in init_src
+
+    def test_icon_translations(self):
+        rules = _load_rules()
+        assert _rule_status(rules, "icon-translations") == "done"
+        import json
+        icons = json.loads(
+            (INTEGRATION / "icons.json").read_text()
+        )
+        assert "entity" in icons
+        switch_src = (INTEGRATION / "switch.py").read_text()
+        assert "_attr_icon" not in switch_src
+
+    def test_reconfiguration_flow(self):
+        rules = _load_rules()
+        assert _rule_status(rules, "reconfiguration-flow") == "done"
+        tree = _parse_module("config_flow.py")
+        assert _has_class_method(
+            tree, "AiperConfigFlow", "async_step_reconfigure"
+        )
+
 
 class TestPlatinumRules:
     def test_async_dependency(self):
@@ -231,6 +282,13 @@ class TestPlatinumRules:
     def test_inject_websession_exempt(self):
         rules = _load_rules()
         assert _rule_status(rules, "inject-websession") == "exempt"
+
+    def test_strict_typing(self):
+        rules = _load_rules()
+        assert _rule_status(rules, "strict-typing") == "done"
+        assert (INTEGRATION / "py.typed").exists()
+        pyproject = (ROOT / "pyproject.toml").read_text()
+        assert "strict = true" in pyproject
 
 
 class TestQualityScaleIntegrity:
