@@ -65,7 +65,7 @@ class IrriSenseClient:
         if service_info:
             self._rssi = service_info.rssi
 
-        self._client = BleakClient(ble_device)
+        self._client = BleakClient(ble_device, timeout=30.0)
         await self._client.connect()
 
         self._buffer.clear()
