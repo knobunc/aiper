@@ -93,6 +93,10 @@ class IrriSenseState:
     rain_detected: bool = False
     water_shortage: bool = False
 
+    # Location (set by phone app during install)
+    latitude: float | None = None
+    longitude: float | None = None
+
     # Connection
     rssi: int | None = None
     available: bool = False
@@ -171,6 +175,7 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
                 and now - self._last_zone_discovery > ZONE_DISCOVERY_INTERVAL
             ):
                 await self._discover_zones_and_plans(client)
+                await self._fetch_location(client)
                 self._last_zone_discovery = now
 
             # Drain any unsolicited notifications that arrived during
@@ -297,6 +302,14 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
         new_plan_ids = {p.plan_id for p in plans}
         if new_plan_ids != old_plan_ids and self._plan_update_callback:
             self._plan_update_callback()
+
+    async def _fetch_location(self, client: IrriSenseClient) -> None:
+        loc = await client.send_command("locationGet")
+        _LOGGER.debug("locationGet: %s", loc)
+        if loc and loc.get("data"):
+            d = loc["data"]
+            self._state.latitude = d.get("latitude")
+            self._state.longitude = d.get("longitude")
 
     def _process_unsolicited(self, notif: dict[str, Any]) -> None:
         ntype = notif.get("type")
