@@ -249,13 +249,34 @@ When starting irrigation on a specific map zone, the app sends a richer payload:
 | `WrMapManageSingleInfo` | Query | `{"id": <long>, "type": <int>, "point_index": <int>}` | Get a single point from a map |
 | `WrMapSetName` | Set | `{"name": "..."}` | Rename a map/zone |
 | `setIrrgatePoint` | Set | `{"valve": <int>, "rotate": <int>}` | Set irrigation waypoint |
-| `locationGet` | Query | none | Get device location |
-| `locationSet` | Set | `{"latitude": <f>, "longitude": <f>}` | Set device location |
+| `WrRotate` | Set | `{"direction": <int>, "angle": <int>}` | Rotate sprinkler head (fire-and-forget, no response) |
+| `locationGet` | Query | none | Get device GPS location |
+| `locationSet` | Set | `{"latitude": <f>, "longitude": <f>}` | Set device GPS location |
 
 #### Map Limits
 
 - **WR models:** Up to **10** map areas
 - **IrriSense 2 SE (WL) models:** Up to **5** map areas
+
+#### Map Coordinate System
+
+Map points use a **device-relative coordinate system** — there is no compass
+or magnetometer on the device.
+
+- **Units:** centimeters, relative to the device's installed position.
+- **Origin:** the device itself (point x=0, y=0 is at the controller).
+- **Orientation:** arbitrary, determined by the device's physical facing at
+  install time. The +x/+y axes have no fixed relationship to compass north.
+- **GPS anchor:** `locationGet` returns the device's GPS coordinates
+  (latitude/longitude), set by the phone app during installation. This
+  provides an absolute reference point to place the relative map on a
+  real-world map.
+- **No compass calibration:** to overlay map points on satellite imagery,
+  a manual rotation offset is required to align the device-relative axes
+  with true north.
+
+**Verified from device data:** x/y values in the range of ±1200 correspond
+to ~40 feet (12m), confirming centimeter-scale units.
 
 #### Map Data Structures
 
@@ -273,11 +294,12 @@ When starting irrigation on a specific map zone, the app sends a richer payload:
 
 | Field | Type | JSON key | Description |
 |-------|------|----------|-------------|
-| `x` | float | `x` | X coordinate |
-| `y` | float | `y` | Y coordinate |
-| `valve` | int | `valve` | Valve number/ID |
-| `rotate` | int | `rotate` | Rotation angle (degrees) |
-| `waterPressure` | float | `waterpress` | Water pressure setting |
+| `x` | int | `x` | X position in centimeters (device-relative) |
+| `y` | int | `y` | Y position in centimeters (device-relative) |
+| `valve` | int | `valve` | Valve open duration/flow (internal units) |
+| `rotate` | int | `rotate` | Sprinkler head pan angle (internal units, not compass degrees) |
+| `waterPressure` | float | `waterpress` | Water pressure reading at this point (PSI) |
+| `num` | int | `num` | Point index (0-based) |
 
 **RegionMappingFormDevice** (returned by `WrMapManageOverView`):
 
@@ -286,7 +308,23 @@ When starting irrigation on a specific map zone, the app sends a richer payload:
 | `name` | string | Map/zone name |
 | `type` | int | Map type |
 | `id` | long | Unique map ID |
-| `count` | int | Number of points in the map |
+| `point_total` | int | Number of points in the map |
+
+**locationGet response:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `latitude` | float | Device GPS latitude (set by phone app during install) |
+| `longitude` | float | Device GPS longitude (set by phone app during install) |
+
+#### WrRotate Command
+
+Physically rotates the sprinkler head. Sent as fire-and-forget (no response).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `direction` | int | Rotation direction: `1` = CW, `2` = CCW |
+| `angle` | int | Rotation amount (internal units) |
 
 #### Map Query Flow
 
