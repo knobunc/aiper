@@ -85,6 +85,9 @@
     },
     "number": {
       "map_rotation": {"name": "Map Rotation"}
+    },
+    "image": {
+      "map": {"name": "Zone Map"}
     }
   }
 }
