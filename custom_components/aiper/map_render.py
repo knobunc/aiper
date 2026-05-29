@@ -108,11 +108,12 @@ def render_map(
         if not zone.points:
             continue
 
+        origin_px = to_px(*_rotate(0, 0, rotation_degrees))
         rotated = [_rotate(pt.x, pt.y, rotation_degrees) for pt in zone.points]
         pixels = [to_px(rx, ry) for rx, ry in rotated]
+        path = [origin_px, *pixels, origin_px]
 
-        if len(pixels) > 1:
-            draw.line(pixels, fill=color, width=2)
+        draw.line(path, fill=color, width=2)
 
         r = 5
         for px, py in pixels:
