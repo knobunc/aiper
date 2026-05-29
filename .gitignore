@@ -2,3 +2,7 @@ decompiled/
 venv/
 __pycache__/
 *.pyc
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
