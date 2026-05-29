@@ -6,7 +6,7 @@ import math
 from io import BytesIO
 from typing import TYPE_CHECKING
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageColor, ImageDraw, ImageFont
 
 if TYPE_CHECKING:
     from .coordinator import IrriSenseZone
@@ -21,6 +21,7 @@ GRID_COLOR = "#e0e0e0"
 ORIGIN_COLOR = "#333333"
 POSITION_COLOR = "#FF1744"
 LABEL_COLOR = "#333333"
+ZONE_FILL_ALPHA = 50
 
 _FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
@@ -81,7 +82,7 @@ def render_map(
         py = margin + (cy - wy) * scale + usable / 2
         return px, py
 
-    img = Image.new("RGB", (image_size, image_size), BG_COLOR)
+    img = Image.new("RGBA", (image_size, image_size), BG_COLOR)
     draw = ImageDraw.Draw(img)
 
     grid_step = 100
@@ -108,11 +109,20 @@ def render_map(
         if not zone.points:
             continue
 
+        origin_px = to_px(*_rotate(0, 0, rotation_degrees))
         rotated = [_rotate(pt.x, pt.y, rotation_degrees) for pt in zone.points]
         pixels = [to_px(rx, ry) for rx, ry in rotated]
+        path = [origin_px, *pixels, origin_px]
 
-        if len(pixels) > 1:
-            draw.line(pixels, fill=color, width=2)
+        rgb = ImageColor.getrgb(color)
+        fill_color = (*rgb, ZONE_FILL_ALPHA)
+        overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        overlay_draw = ImageDraw.Draw(overlay)
+        overlay_draw.polygon(path, fill=fill_color)
+        img = Image.alpha_composite(img, overlay)
+        draw = ImageDraw.Draw(img)
+
+        draw.line(path, fill=color, width=2)
 
         r = 5
         for px, py in pixels:
@@ -168,5 +178,5 @@ def render_map(
         legend_x += 16 + (bbox[2] - bbox[0]) + 12
 
     buf = BytesIO()
-    img.save(buf, format="PNG")
+    img.convert("RGB").save(buf, format="PNG")
     return buf.getvalue()
