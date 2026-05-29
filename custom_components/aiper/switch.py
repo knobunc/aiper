@@ -9,7 +9,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import SENSE_TYPE_RAIN_SENSOR, SENSE_TYPE_WEATHER_RAIN, SENSE_TYPE_WEATHER_WIND
+from .const import (
+    SENSE_TYPE_RAIN_SENSOR,
+    SENSE_TYPE_WEATHER_RAIN,
+    SENSE_TYPE_WEATHER_WIND,
+)
 from .coordinator import IrriSenseCoordinator, IrriSensePlan
 from .entity import IrriSenseEntity
 
@@ -26,13 +30,16 @@ async def async_setup_entry(
 
     entities: list[SwitchEntity] = [
         IrriSenseSenseSwitch(
-            coordinator, "rain_sensor", SENSE_TYPE_RAIN_SENSOR, lambda s: s.rain_sensor
+            coordinator, "rain_sensor",
+            SENSE_TYPE_RAIN_SENSOR, lambda s: s.rain_sensor,
         ),
         IrriSenseSenseSwitch(
-            coordinator, "weather_rain", SENSE_TYPE_WEATHER_RAIN, lambda s: s.weather_rain
+            coordinator, "weather_rain",
+            SENSE_TYPE_WEATHER_RAIN, lambda s: s.weather_rain,
         ),
         IrriSenseSenseSwitch(
-            coordinator, "weather_wind", SENSE_TYPE_WEATHER_WIND, lambda s: s.weather_wind
+            coordinator, "weather_wind",
+            SENSE_TYPE_WEATHER_WIND, lambda s: s.weather_wind,
         ),
         IrriSenseAllSchedulesSwitch(coordinator),
     ]

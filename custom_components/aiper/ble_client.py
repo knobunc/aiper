@@ -10,7 +10,13 @@ from bleak import BleakClient, BleakError
 from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant
 
-from .const import COMMAND_TIMEOUT, MAX_CHUNK, NUS_RX_UUID, NUS_TX_UUID, UNSOLICITED_TYPES
+from .const import (
+    COMMAND_TIMEOUT,
+    MAX_CHUNK,
+    NUS_RX_UUID,
+    NUS_TX_UUID,
+    UNSOLICITED_TYPES,
+)
 from .protocol import build_command, parse_response
 
 _LOGGER = logging.getLogger(__name__)
@@ -66,7 +72,7 @@ class IrriSenseClient:
         self._unsolicited.clear()
         await self._client.start_notify(NUS_TX_UUID, self._on_notify)
 
-    def _on_notify(self, _sender: int, data: bytearray) -> None:
+    def _on_notify(self, _sender: Any, data: bytearray) -> None:
         """Handle incoming BLE notifications, buffering until newline."""
         self._buffer.extend(data)
         if not self._buffer.endswith(b"\n"):
@@ -75,13 +81,19 @@ class IrriSenseClient:
             response = parse_response(bytes(self._buffer))
             if response.get("type") in UNSOLICITED_TYPES:
                 self._unsolicited.append(response)
-                _LOGGER.debug("Unsolicited %s: %s", response.get("type"), response.get("data"))
+                _LOGGER.debug(
+                    "Unsolicited %s: %s",
+                    response.get("type"),
+                    response.get("data"),
+                )
             else:
                 self._last_response = response
                 self._response_event.set()
         except Exception:
             _LOGGER.warning(
-                "Failed to parse BLE response (%d bytes)", len(self._buffer), exc_info=True
+                "Failed to parse BLE response (%d bytes)",
+                len(self._buffer),
+                exc_info=True,
             )
         self._buffer.clear()
 
