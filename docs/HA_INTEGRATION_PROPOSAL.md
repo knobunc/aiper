@@ -123,6 +123,29 @@ custom_components/aiper/
 | `switch.irrisense_rain_sensor` | Rain Sensor | `GetSenseSwitch` / `SetSenseSwitch` type=2 | Physical rain sensor hardware |
 | `switch.irrisense_weather_rain` | Weather Rain | `GetSenseSwitch` / `SetSenseSwitch` type=0 | Cloud-based rain forecast skip |
 | `switch.irrisense_weather_wind` | Weather Wind | `GetSenseSwitch` / `SetSenseSwitch` type=1 | Cloud-based wind forecast skip |
+| `switch.irrisense_plan_{id}` | Plan: {name} | `WrPlanBatchEdit` | Per-plan enable/disable (dynamic, see below) |
+| `switch.irrisense_all_schedules` | All Schedules | `WrPlanBatchEdit` | Global enable/disable for all plans |
+
+#### Dynamic Plan Switches
+
+A switch entity is created for each irrigation plan configured on the device. These entities are **dynamic** — they track plans created, renamed, and deleted in the phone app.
+
+- **Stable identity:** Each plan has a numeric `plan_id` from the device. The entity `unique_id` is `irrisense_{serial}_plan_{plan_id}`, so the entity survives renames.
+- **Name updates:** The entity's friendly name comes from the plan name in `WrPlanOverview`. Updated each time the coordinator re-fetches the plan list (every 10 minutes while idle).
+- **New plans:** Discovered on the next `WrPlanOverview` fetch. The coordinator signals the switch platform to register new entities via `async_add_entities`.
+- **Deleted plans:** Entity becomes unavailable. Removed from the entity registry on the following poll cycle.
+- **Latency:** Plan changes made in the phone app appear in HA within ~10 minutes (the zone discovery interval).
+
+**Protocol:** `WrPlanBatchEdit` with body `{"enable_plans": [plan_id]}` or `{"disable_plans": [plan_id]}`. Supports multiple IDs per call, which is used by the global switch.
+
+#### Global "All Schedules" Switch
+
+A synthetic switch that enables or disables all plans at once. There is no native "global disable" command on the device — this switch sends a single `WrPlanBatchEdit` with all known plan IDs.
+
+- **ON:** `{"enable_plans": [id1, id2, ...]}`
+- **OFF:** `{"disable_plans": [id1, id2, ...]}`
+- **State:** ON if any plan is enabled, OFF if all plans are disabled
+- **Use case:** Vacation mode, seasonal shutdown, or quick disable before maintenance
 
 ### Buttons
 

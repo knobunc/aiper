@@ -424,7 +424,7 @@ The app retries each point upload up to **10 times** on failure.
 | `WrPlanOverview` | Query | none | Get used/available plan IDs (up to 40 slots) |
 | `WrPlanDetail` | Query | `{"plan_id": <int>}` | Get full details of a specific plan |
 | `WrPlanConfig` | Set | see [Plan Config](#plan-config-wrplanconfig) | Create/edit an irrigation plan |
-| `WrPlanBatchEdit` | Set | batch data | Batch edit multiple plans |
+| `WrPlanBatchEdit` | Set | `{"enable_plans": [id,...]}` or `{"disable_plans": [id,...]}` | Batch enable/disable plans |
 | `WrPlanBatchDelete` | Set | batch ids | Batch delete plans |
 
 #### WrPlanOverview Response (confirmed V3.8.6)
@@ -502,6 +502,20 @@ From decompiled app — used to create/edit plans:
   "enabled": true
 }
 ```
+
+#### Plan Batch Edit (WrPlanBatchEdit)
+
+Enable or disable multiple plans in a single command. The body uses one of two keys depending on the desired action:
+
+```json
+{"enable_plans": [1, 3]}
+```
+
+```json
+{"disable_plans": [1, 3]}
+```
+
+The plan IDs correspond to the `plan_id` values from `WrPlanOverview.used_ids`. From decompiled `IrrigationTaskV3ViewModel`: `batchOpen` sends `enable_plans`, `batchClose` sends `disable_plans`, and `toggleEnabledState` toggles a single plan by sending its ID in the appropriate list.
 
 ### Weather/Sensor Integration
 
