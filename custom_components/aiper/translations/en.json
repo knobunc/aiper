@@ -43,6 +43,8 @@
       "valve": {"name": "Valve"},
       "model": {"name": "Model"},
       "serial": {"name": "Serial Number"},
+      "latitude": {"name": "Latitude"},
+      "longitude": {"name": "Longitude"},
       "rssi": {"name": "BLE RSSI"}
     },
     "binary_sensor": {

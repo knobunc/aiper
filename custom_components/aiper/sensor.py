@@ -135,6 +135,18 @@ SENSOR_DESCRIPTIONS: tuple[IrriSenseSensorDescription, ...] = (
         value_fn=lambda s: s.serial or None,
     ),
     IrriSenseSensorDescription(
+        key="latitude",
+        translation_key="latitude",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: s.latitude,
+    ),
+    IrriSenseSensorDescription(
+        key="longitude",
+        translation_key="longitude",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: s.longitude,
+    ),
+    IrriSenseSensorDescription(
         key="rssi",
         translation_key="rssi",
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
