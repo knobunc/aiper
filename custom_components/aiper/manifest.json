@@ -10,6 +10,7 @@
   "config_flow": true,
   "dependencies": ["bluetooth_adapters"],
   "documentation": "https://github.com/knobunc/aiper",
+  "issue_tracker": "https://github.com/knobunc/aiper/issues",
   "integration_type": "device",
   "iot_class": "local_polling",
   "requirements": [],
