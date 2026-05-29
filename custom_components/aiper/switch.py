@@ -17,6 +17,27 @@ from .const import (
 from .coordinator import IrriSenseCoordinator, IrriSensePlan
 from .entity import IrriSenseEntity
 
+_WEEKDAY_ABBR = {0: "Su", 1: "M", 2: "T", 3: "W", 4: "Th", 5: "F", 6: "Sa"}
+
+
+def _format_weekdays(weekdays: list[int]) -> str:
+    """Format weekday list into abbreviated string like MWF or Daily."""
+    if sorted(weekdays) == list(range(7)):
+        return "Daily"
+    return "".join(_WEEKDAY_ABBR.get(d, "?") for d in sorted(weekdays))
+
+
+def _plan_display_name(plan: IrriSensePlan) -> str:
+    """Build a descriptive plan name: zone + start time + weekdays + depth."""
+    parts = [f"Plan: {plan.zone_name or plan.name}"]
+    if plan.start_time:
+        parts.append(plan.start_time)
+    if plan.weekdays:
+        parts.append(_format_weekdays(plan.weekdays))
+    if plan.depth:
+        parts.append(f"{plan.depth}in")
+    return " ".join(parts)
+
 type AiperConfigEntry = ConfigEntry[IrriSenseCoordinator]
 
 
@@ -103,21 +124,43 @@ class IrriSensePlanSwitch(IrriSenseEntity, SwitchEntity):
         super().__init__(coordinator)
         self._plan_id = plan.plan_id
         self._attr_unique_id = f"{coordinator.address}-plan-{plan.plan_id}"
-        self._attr_name = f"Plan: {plan.name}"
+        self._attr_name = _plan_display_name(plan)
 
-    @property
-    def is_on(self) -> bool | None:
+    def _find_plan(self) -> IrriSensePlan | None:
         for plan in self.coordinator.data.plans:
             if plan.plan_id == self._plan_id:
-                self._attr_name = f"Plan: {plan.name}"
-                return plan.enabled
+                return plan
         return None
 
     @property
+    def is_on(self) -> bool | None:
+        plan = self._find_plan()
+        if plan is None:
+            return None
+        self._attr_name = _plan_display_name(plan)
+        return plan.enabled
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        plan = self._find_plan()
+        if plan is None:
+            return None
+        return {
+            "plan_id": plan.plan_id,
+            "zone_name": plan.zone_name,
+            "zone_id": plan.zone_id,
+            "start_time": plan.start_time,
+            "weekdays": _format_weekdays(plan.weekdays) if plan.weekdays else None,
+            "weekdays_raw": plan.weekdays,
+            "depth_inches": plan.depth,
+            "point_time_minutes": plan.point_time,
+            "estimated_time_minutes": plan.estimated_time,
+            "repeat_type": plan.repeat_type,
+        }
+
+    @property
     def available(self) -> bool:
-        return super().available and any(
-            p.plan_id == self._plan_id for p in self.coordinator.data.plans
-        )
+        return super().available and self._find_plan() is not None
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self.coordinator.async_set_plan_enabled([self._plan_id], True)

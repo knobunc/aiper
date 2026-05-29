@@ -123,15 +123,31 @@ custom_components/aiper/
 | `switch.irrisense_rain_sensor` | Rain Sensor | `GetSenseSwitch` / `SetSenseSwitch` type=2 | Physical rain sensor hardware |
 | `switch.irrisense_weather_rain` | Weather Rain | `GetSenseSwitch` / `SetSenseSwitch` type=0 | Cloud-based rain forecast skip |
 | `switch.irrisense_weather_wind` | Weather Wind | `GetSenseSwitch` / `SetSenseSwitch` type=1 | Cloud-based wind forecast skip |
-| `switch.irrisense_plan_{id}` | Plan: {name} | `WrPlanBatchEdit` | Per-plan enable/disable (dynamic, see below) |
+| `switch.irrisense_plan_{id}` | Plan: {zone} {time} {days} {depth} | `WrPlanBatchEdit` | Per-plan enable/disable (dynamic, see below) |
 | `switch.irrisense_all_schedules` | All Schedules | `WrPlanBatchEdit` | Global enable/disable for all plans |
 
 #### Dynamic Plan Switches
 
 A switch entity is created for each irrigation plan configured on the device. These entities are **dynamic** — they track plans created, renamed, and deleted in the phone app.
 
-- **Stable identity:** Each plan has a numeric `plan_id` from the device. The entity `unique_id` is `irrisense_{serial}_plan_{plan_id}`, so the entity survives renames.
-- **Name updates:** The entity's friendly name comes from the plan name in `WrPlanOverview`. Updated each time the coordinator re-fetches the plan list (every 10 minutes while idle).
+- **Stable identity:** Each plan has a numeric `plan_id` from the device. The entity `unique_id` is `{address}-plan-{plan_id}`, so the entity survives renames and schedule changes.
+- **Descriptive name:** The entity's friendly name is composed from zone name, start time, abbreviated weekdays, and depth — e.g. `Plan: North Side 7:30 MWF 0.25in`. This makes each plan visually distinct even when multiple plans target the same zone. Updated each poll cycle.
+- **Weekday abbreviation:** `M T W Th F Sa Su` or `Daily` when all seven days are selected.
+- **Extra state attributes:** Each plan switch exposes additional details as entity attributes for use in automations and dashboards:
+
+  | Attribute | Type | Description |
+  |-----------|------|-------------|
+  | `plan_id` | int | Device-assigned plan identifier |
+  | `zone_name` | str | Target zone/area name |
+  | `zone_id` | int | Target zone identifier |
+  | `start_time` | str | Scheduled start time (HH:MM) |
+  | `weekdays` | str | Abbreviated schedule (e.g. "MWF", "Daily") |
+  | `weekdays_raw` | list[int] | Raw weekday codes (0=Sun, 1=Mon, ..., 6=Sat) |
+  | `depth_inches` | float | Water depth target in inches |
+  | `point_time_minutes` | int | Minutes per irrigation point |
+  | `estimated_time_minutes` | int | Estimated total run time |
+  | `repeat_type` | int | Recurrence pattern code |
+
 - **New plans:** Discovered on the next `WrPlanOverview` fetch. The coordinator signals the switch platform to register new entities via `async_add_entities`.
 - **Deleted plans:** Entity becomes unavailable. Removed from the entity registry on the following poll cycle.
 - **Latency:** Plan changes made in the phone app appear in HA within ~10 minutes (the zone discovery interval).

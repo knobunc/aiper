@@ -64,3 +64,14 @@ def test_parse_with_chksum():
     assert result["type"] == "workInfo"
     assert result["data"] == {"status": 1}
     assert result["res"] == 0
+
+
+def test_parse_with_missing_base64_padding():
+    payload = {"DevInfo": {"sn": "ABC"}, "res": 0}
+    json_bytes = json.dumps(payload, separators=(",", ":")).encode()
+    encrypted = xor_crypt(json_bytes)
+    encoded = base64.b64encode(encrypted).decode("ascii")
+    stripped = encoded.rstrip("=") + "\n"
+    result = parse_response(stripped.encode())
+    assert result["type"] == "DevInfo"
+    assert result["data"]["sn"] == "ABC"

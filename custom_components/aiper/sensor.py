@@ -30,7 +30,7 @@ from .entity import IrriSenseEntity
 
 type AiperConfigEntry = ConfigEntry[IrriSenseCoordinator]
 
-WEEKDAY_MAP = {1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6}
+WEEKDAY_MAP = {0: 6, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5}
 
 
 def _compute_next_run(state: IrriSenseState) -> datetime | None:
