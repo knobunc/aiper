@@ -17,6 +17,8 @@ from .const import (
 from .coordinator import IrriSenseCoordinator, IrriSensePlan
 from .entity import IrriSenseEntity
 
+PARALLEL_UPDATES = 0
+
 _WEEKDAY_ABBR = {0: "Su", 1: "M", 2: "T", 3: "W", 4: "Th", 5: "F", 6: "Sa"}
 
 
@@ -82,6 +84,9 @@ async def async_setup_entry(
             async_add_entities(new_entities)
 
     coordinator.set_plan_update_callback(_check_new_plans)
+    entry.async_on_unload(
+        lambda: coordinator.set_plan_update_callback(lambda: None)
+    )
 
 
 class IrriSenseSenseSwitch(IrriSenseEntity, SwitchEntity):

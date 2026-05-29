@@ -10,6 +10,10 @@
         "data": {
           "address": "Device"
         }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate {address}",
+        "description": "The device at **{address}** could not be reached after multiple attempts. Confirm to retry."
       }
     },
     "error": {

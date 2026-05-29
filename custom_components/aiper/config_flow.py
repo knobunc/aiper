@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 import voluptuous as vol
+from bleak import BleakClient, BleakError
 from homeassistant.components.bluetooth import (
     BluetoothServiceInfoBleak,
     async_discovered_service_info,
@@ -53,20 +54,31 @@ class AiperConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Confirm the discovered device."""
-        if user_input is None:
-            self._set_confirm_only()
-            return self.async_show_form(
-                step_id="confirm",
-                data_schema=vol.Schema({}),
-                description_placeholders={
-                    "name": self._name or "Unknown",
-                    "address": self._address or "Unknown",
-                },
-            )
+        errors: dict[str, str] = {}
 
-        return self.async_create_entry(
-            title=self._name or f"IrriSense {self._address}",
-            data={CONF_ADDRESS: self._address},
+        if user_input is not None:
+            try:
+                assert self._address is not None
+                client = BleakClient(self._address)
+                await client.connect(timeout=10)
+                await client.disconnect()
+            except (BleakError, TimeoutError, OSError):
+                errors["base"] = "cannot_connect"
+            else:
+                return self.async_create_entry(
+                    title=self._name or f"IrriSense {self._address}",
+                    data={CONF_ADDRESS: self._address},
+                )
+
+        self._set_confirm_only()
+        return self.async_show_form(
+            step_id="confirm",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "name": self._name or "Unknown",
+                "address": self._address or "Unknown",
+            },
+            errors=errors,
         )
 
     async def async_step_user(
@@ -96,6 +108,29 @@ class AiperConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {vol.Required(CONF_ADDRESS): vol.In(aiper_devices)}
             ),
+        )
+
+    async def async_step_reauth(
+        self, entry_data: dict[str, Any]
+    ) -> ConfigFlowResult:
+        """Handle reauth when the device can no longer be reached."""
+        self._address = entry_data.get(CONF_ADDRESS)
+        self._name = f"IrriSense {self._address}"
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm reauth — re-discover and update the entry."""
+        if user_input is not None:
+            reauth_entry = self._get_reauth_entry()
+            return self.async_update_reload_and_abort(
+                reauth_entry, data={CONF_ADDRESS: self._address}
+            )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            description_placeholders={"address": self._address or "Unknown"},
         )
 
     @staticmethod

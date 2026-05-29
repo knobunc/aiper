@@ -19,6 +19,8 @@ from .entity import IrriSenseEntity
 
 type AiperConfigEntry = ConfigEntry[IrriSenseCoordinator]
 
+PARALLEL_UPDATES = 0
+
 
 @dataclass(frozen=True, kw_only=True)
 class IrriSenseBinarySensorDescription(BinarySensorEntityDescription):

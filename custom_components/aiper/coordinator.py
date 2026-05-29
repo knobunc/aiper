@@ -12,6 +12,7 @@ from typing import Any
 from bleak import BleakError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .ble_client import DeviceUnavailable, IrriSenseClient
@@ -129,6 +130,8 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
         self._state = IrriSenseState()
         self._last_zone_discovery: float = 0
         self._plan_update_callback: Callable[[], None] | None = None
+        self._was_available: bool = False
+        self._consecutive_failures: int = 0
 
     @property
     def address(self) -> str:
@@ -142,14 +145,27 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
         try:
             await client.connect()
         except (BleakError, TimeoutError, DeviceUnavailable) as err:
-            _LOGGER.debug("BLE connect failed, will retry: %s", err)
+            self._consecutive_failures += 1
             self._state.available = False
+            if self._was_available:
+                _LOGGER.warning(
+                    "Device %s is unavailable: %s", self._address, err
+                )
+                self._was_available = False
+            else:
+                _LOGGER.debug("BLE connect failed, will retry: %s", err)
+            if self._consecutive_failures >= 10:
+                self.config_entry.async_start_reauth(self.hass)
             self.update_interval = timedelta(seconds=POLL_UNAVAILABLE)
             return self._state
 
         try:
+            self._consecutive_failures = 0
             self._state.rssi = client.rssi
             self._state.available = True
+            if not self._was_available:
+                _LOGGER.info("Device %s is available", self._address)
+                self._was_available = True
 
             # Drain any unsolicited notifications that arrived during
             # connect (the device proactively sends Alarm on connect).
@@ -348,6 +364,10 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
             await self._client.connect()
             result = await self._client.send_command(cmd, data)
             return result
+        except (BleakError, TimeoutError, DeviceUnavailable) as err:
+            raise HomeAssistantError(
+                f"Failed to send {cmd} to {self._address}: {err}"
+            ) from err
         finally:
             await self._client.disconnect()
 
