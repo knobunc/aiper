@@ -85,6 +85,10 @@ class TestPlanDisplayName:
         plan = _make_plan(zone_name="", name="My Plan")
         assert _plan_display_name(plan) == "Plan: My Plan 07:30 MWF 0.25in"
 
+    def test_float32_depth_rounded(self):
+        plan = _make_plan(depth=0.10000000149011612)
+        assert _plan_display_name(plan) == "Plan: North Side 07:30 MWF 0.1in"
+
     def test_two_plans_same_zone_different_schedules(self):
         plan_a = _make_plan(
             start_time="07:30", weekdays=[1, 3, 5], depth=0.25
