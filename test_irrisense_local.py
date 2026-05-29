@@ -15,10 +15,8 @@ import argparse
 import asyncio
 import base64
 import json
-import sys
 
 from bleak import BleakClient, BleakScanner
-
 
 # ---------------------------------------------------------------------------
 # Protocol layer (shared with ESPHome proxy version)
@@ -46,7 +44,9 @@ def build_command(cmd_type: str, data: dict | None = None) -> bytes:
 
 
 def parse_response(raw: bytes) -> dict:
-    decoded = base64.b64decode(raw.rstrip(b"\n"))
+    stripped = raw.rstrip(b"\n")
+    padding = (4 - len(stripped) % 4) % 4
+    decoded = base64.b64decode(stripped + b"=" * padding)
     decrypted = xor_crypt(decoded)
     data = json.loads(decrypted.decode("utf-8"))
     for key in data:
@@ -163,9 +163,12 @@ SAFE_COMMANDS = [
     ("WrPlanOverview", None, "Get plan overview"),
     ("_dump_plans", None, "Dump all plan details"),
     ("locationGet", None, "Get device GPS location"),
+    ("_location_vs_points", None, "Compare GPS location vs map point coords"),
     ("Alarm", None, "Get alarm status"),
     ("GetWrPesticides", None, "Get pesticide status"),
     ("WrRecordOverView", None, "Get irrigation record overview"),
+    ("_query_point", None, "Query a single map point by id/type/index"),
+    ("_dump_records", None, "Dump irrigation history records"),
 ]
 
 
@@ -201,7 +204,7 @@ async def dump_all_maps(conn: IrriSenseConnection):
         print()
 
 
-WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+WEEKDAYS = {0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat"}
 
 
 async def dump_all_plans(conn: IrriSenseConnection):
@@ -224,7 +227,7 @@ async def dump_all_plans(conn: IrriSenseConnection):
             mi = d.get("map_info", {})
             wc = d.get("work_ctrl", {})
             tc = d.get("time_ctrl", {})
-            days = ", ".join(WEEKDAYS[i - 1] for i in tc.get("weekdays", []) if 1 <= i <= 7)
+            days = ", ".join(WEEKDAYS.get(i, f"?{i}") for i in tc.get("weekdays", []))
             repeat = "weekly" if tc.get("repeat_type") == 1 else f"repeat={tc.get('repeat_type')}"
             enabled = "ON" if d.get("enabled") else "OFF"
             print(f"  Plan {plan_id}: {mi.get('name', '?')} [{enabled}]")
@@ -233,6 +236,98 @@ async def dump_all_plans(conn: IrriSenseConnection):
             print(f"    Est. runtime: {d.get('estimated_time', '?')} min")
         else:
             print(f"  Plan {plan_id}: (no response)")
+    print()
+
+
+async def location_vs_points(conn: IrriSenseConnection):
+    """Fetch device GPS and first point from each map to compare coordinate systems."""
+    print("  Fetching device GPS location...")
+    loc = await conn.send_command("locationGet")
+    if loc and loc.get("data"):
+        d = loc["data"]
+        print(f"  Device GPS: lat={d.get('latitude')}, lon={d.get('longitude')}")
+    else:
+        print("  No GPS location available")
+
+    print("\n  Fetching first point from each map...")
+    overview = await conn.send_command("WrMapManageOverView")
+    if not overview or not overview.get("data"):
+        print("  No map data available")
+        return
+
+    maps = overview["data"].get("map_list", [])
+    for m in maps:
+        resp = await conn.send_command("WrMapManageSingleInfo", {
+            "id": m["id"], "type": m["type"], "point_index": 0
+        })
+        if resp and resp.get("data"):
+            pt = resp["data"].get("point_info", {})
+            print(f"  {m['name']} point[0]: x={pt.get('x')}, y={pt.get('y')}, "
+                  f"valve={pt.get('valve')}, rotate={pt.get('rotate')}")
+        else:
+            print(f"  {m['name']} point[0]: (no response)")
+    print()
+
+
+async def query_single_point(conn: IrriSenseConnection):
+    """Interactively query a single map point."""
+    overview = await conn.send_command("WrMapManageOverView")
+    if not overview or not overview.get("data"):
+        print("  No map data available")
+        return
+
+    maps = overview["data"].get("map_list", [])
+    print("  Available maps:")
+    for i, m in enumerate(maps, 1):
+        print(f"    {i}. {m['name']} (id={m['id']}, type={m['type']}, "
+              f"{m['point_total']} points)")
+
+    map_choice = await asyncio.get_event_loop().run_in_executor(
+        None, lambda: input("  Map number: "))
+    idx = int(map_choice.strip()) - 1
+    if not (0 <= idx < len(maps)):
+        print("  Invalid selection")
+        return
+    m = maps[idx]
+
+    pt_input = await asyncio.get_event_loop().run_in_executor(
+        None, lambda: input(f"  Point index (0-{m['point_total']-1}): "))
+    pt_idx = int(pt_input.strip())
+
+    resp = await conn.send_command("WrMapManageSingleInfo", {
+        "id": m["id"], "type": m["type"], "point_index": pt_idx
+    })
+    if resp and resp.get("data"):
+        print(json.dumps(resp["data"], indent=2))
+    else:
+        print("  No response")
+    print()
+
+
+async def dump_records(conn: IrriSenseConnection):
+    """Dump irrigation history records."""
+    print("  Fetching record overview...")
+    overview = await conn.send_command("WrRecordOverView")
+    if not overview or not overview.get("data"):
+        print("  No record data available")
+        return
+
+    data = overview["data"]
+    print(json.dumps(data, indent=2))
+
+    used_ids = data.get("used_ids", [])
+    if not used_ids:
+        print("  No records found")
+        return
+
+    print(f"\n  Found {len(used_ids)} record(s), fetching details...")
+    for rec_id in used_ids:
+        resp = await conn.send_command("WrRecordDetail", {"record_id": rec_id})
+        if resp and resp.get("data"):
+            print(f"\n  Record {rec_id}:")
+            print(json.dumps(resp["data"], indent=2))
+        else:
+            print(f"\n  Record {rec_id}: (no response)")
     print()
 
 
@@ -302,6 +397,15 @@ async def interactive_loop(conn: IrriSenseConnection):
             continue
         if cmd_type == "_dump_plans":
             await dump_all_plans(conn)
+            continue
+        if cmd_type == "_location_vs_points":
+            await location_vs_points(conn)
+            continue
+        if cmd_type == "_query_point":
+            await query_single_point(conn)
+            continue
+        if cmd_type == "_dump_records":
+            await dump_records(conn)
             continue
 
         print(f"  Sending: {cmd_type} {json.dumps(cmd_data) if cmd_data else ''}")
