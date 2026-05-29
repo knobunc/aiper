@@ -79,7 +79,7 @@ SENSOR_DESCRIPTIONS: tuple[IrriSenseSensorDescription, ...] = (
     IrriSenseSensorDescription(
         key="current_zone",
         translation_key="current_zone",
-        value_fn=lambda s: s.current_zone if s.is_irrigating else None,
+        value_fn=lambda s: s.current_zone if s.is_irrigating else "Idle",
     ),
     IrriSenseSensorDescription(
         key="run_time",
