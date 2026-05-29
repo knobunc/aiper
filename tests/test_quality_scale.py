@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION = ROOT / "custom_components" / "aiper"
 QUALITY_SCALE = INTEGRATION / "quality_scale.yaml"
 
-PLATFORM_FILES = ["sensor.py", "binary_sensor.py", "switch.py"]
+PLATFORM_FILES = ["sensor.py", "binary_sensor.py", "switch.py", "number.py"]
 
 
 def _load_rules() -> dict:
