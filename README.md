@@ -4,13 +4,15 @@ A [Home Assistant](https://www.home-assistant.io/) custom integration for the [A
 
 Communicates directly with the device over Bluetooth Low Energy using the Nordic UART Service — no cloud, no hub, fully local.
 
+**Integration Quality Scale: Silver** — see [quality_scale.yaml](custom_components/aiper/quality_scale.yaml) for details.
+
 ## Features
 
-- **Sensor entities**: status, current zone, run time, progress, water pressure, firmware version, next scheduled run, valve state
-- **Diagnostic sensors**: model, serial number, BLE RSSI
-- **Binary sensors**: irrigating, rain detected, water shortage, connected
+- **Sensor entities**: status, current zone, run time, progress, water pressure, firmware version, next scheduled run
+- **Diagnostic sensors**: model, serial number, latitude, longitude, BLE RSSI, valve state, water flow, connected
+- **Binary sensors**: irrigating, rain detected
 - **Switches**:
-  - Rain sensor, weather rain, weather wind (sense settings)
+  - Use Rain Sensor, Use Rain Forecast, Use Wind Forecast (sense settings)
   - Per-plan schedule enable/disable (dynamically created as plans are added)
   - All Schedules master switch
 - **Services**: start/stop/pause irrigation, water specific zones, enable/disable schedules, send raw BLE commands
