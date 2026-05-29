@@ -153,14 +153,37 @@ A synthetic switch that enables or disables all plans at once. There is no nativ
 |-----------|------|---------|-------|
 | `button.irrisense_stop` | Stop Irrigation | `setWorkMode` mode=0, status=0 | Emergency stop |
 
-### Services (custom)
+### Services
 
 | Service | Parameters | Command | Notes |
 |---------|-----------|---------|-------|
-| `aiper.start_irrigation` | `zone_name` or `map_id`, `water_yield` (optional) | `setWorkMode` | Start irrigation on a specific zone |
-| `aiper.stop_irrigation` | — | `setWorkMode` mode=0, status=0 | Stop current irrigation |
+| `aiper.water_area` | `segment_ids` (list of zone IDs) | `setWorkMode` | Irrigate specific zones |
+| `aiper.stop` | — | `setWorkMode` mode=0, status=0 | Stop current irrigation |
 
-Using a custom service for start (rather than a button per zone) because the zone selection is dynamic — zones are user-configured and can change.
+#### Zone Segments (modeled after `vacuum.clean_area`)
+
+Zones are exposed as **segments** following the same pattern as `vacuum.clean_area` / `async_clean_segments`:
+
+```python
+@dataclass(slots=True)
+class IrriSenseSegment:
+    id: str          # map_id from WrMapManageOverView (stable numeric ID)
+    name: str        # user-assigned zone name
+    group: str | None = None  # zone type (e.g., "lawn", "garden")
+```
+
+**Integration methods:**
+
+| Method | Description |
+|--------|-------------|
+| `async_get_segments()` | Returns current zones from cached `WrMapManageOverView` data |
+| `async_water_segments(segment_ids)` | Sends `setWorkMode` for each zone ID |
+| `last_seen_segments` | Zones at last area mapping — detects zone re-mapping |
+| `async_create_segments_issue()` | Creates repair issue when zones change |
+
+**Segment → HA Area mapping:** Users map IrriSense zones to HA Areas in the UI (Settings > Devices > Entities > "Map irrigation zones to areas"). Once mapped, `aiper.water_area` can be called targeting an `area_id` and the integration resolves it to the correct zone segment ID.
+
+**Zone stability:** Zone IDs (`map_id`) can change if the user re-maps zones in the phone app. The `last_seen_segments` / repair issue pattern (same as vacuum) handles this — if segments change, a repair prompts the user to re-map.
 
 ### Number Entities (future)
 
@@ -284,13 +307,14 @@ class IrriSenseState:
     available: bool
 ```
 
-### Zone Discovery
+### Zone Discovery & Segment Management
 
 On first connect and periodically (every 10 minutes while idle):
 
 1. Send `WrMapManageOverView` → get list of zones with IDs, names, types
-2. Cache zone list for service call validation and zone name display
-3. Optionally fetch `WrPlanOverview` + `WrPlanDetail` for schedule display
+2. Build `IrriSenseSegment` list for `async_get_segments()` and area mapping
+3. Compare against `last_seen_segments` — if changed, call `async_create_segments_issue()` to prompt re-mapping
+4. Fetch `WrPlanOverview` + `WrPlanDetail` for schedule display and plan switch entities
 
 Zone details (individual points) are not fetched during normal polling — they're only needed for map display which is not an HA concern.
 
