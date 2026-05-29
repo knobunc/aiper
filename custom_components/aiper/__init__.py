@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components import bluetooth
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.exceptions import ConfigEntryNotReady, ServiceValidationError
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 
 from .const import DOMAIN, PLATFORMS
@@ -22,13 +21,6 @@ type AiperConfigEntry = ConfigEntry[IrriSenseCoordinator]
 async def async_setup_entry(hass: HomeAssistant, entry: AiperConfigEntry) -> bool:
     """Set up Aiper IrriSense from a config entry."""
     address: str = entry.data[CONF_ADDRESS]
-
-    ble_device = bluetooth.async_ble_device_from_address(
-        hass, address.upper(), connectable=True
-    )
-    if ble_device is None:
-        raise ConfigEntryNotReady(f"Could not find device {address}")
-
     coordinator = IrriSenseCoordinator(hass, address, entry)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator

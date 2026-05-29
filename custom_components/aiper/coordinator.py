@@ -133,9 +133,10 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
         try:
             await client.connect()
         except (BleakError, TimeoutError, DeviceUnavailable) as err:
+            _LOGGER.debug("BLE connect failed, will retry: %s", err)
             self._state.available = False
             self.update_interval = timedelta(seconds=POLL_UNAVAILABLE)
-            raise UpdateFailed(f"BLE connect failed: {err}") from err
+            return self._state
 
         try:
             self._state.rssi = client.rssi
