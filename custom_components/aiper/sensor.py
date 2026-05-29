@@ -140,13 +140,13 @@ SENSOR_DESCRIPTIONS: tuple[IrriSenseSensorDescription, ...] = (
         key="latitude",
         translation_key="latitude",
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda s: s.latitude,
+        value_fn=lambda s: round(s.latitude, 6) if s.latitude else None,
     ),
     IrriSenseSensorDescription(
         key="longitude",
         translation_key="longitude",
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda s: s.longitude,
+        value_fn=lambda s: round(s.longitude, 6) if s.longitude else None,
     ),
     IrriSenseSensorDescription(
         key="rssi",
