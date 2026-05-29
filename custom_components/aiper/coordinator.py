@@ -142,13 +142,14 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
             self._state.rssi = client.rssi
             self._state.available = True
 
+            # Drain any unsolicited notifications that arrived during
+            # connect (the device proactively sends Alarm on connect).
+            for notif in client.drain_unsolicited():
+                self._process_unsolicited(notif)
+
             work = await client.send_command("workInfo")
             if work and work.get("res") != -1:
                 self._apply_work_info(work["data"])
-
-            alarm = await client.send_command("Alarm")
-            if alarm and alarm.get("res") != -1:
-                self._apply_alarm(alarm["data"])
 
             if not self._state.is_irrigating:
                 dev = await client.send_command("DevInfo")
@@ -167,6 +168,8 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
                 await self._discover_zones_and_plans(client)
                 self._last_zone_discovery = now
 
+            # Drain any unsolicited notifications that arrived during
+            # the poll cycle.
             for notif in client.drain_unsolicited():
                 self._process_unsolicited(notif)
 
