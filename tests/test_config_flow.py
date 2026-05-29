@@ -2,7 +2,6 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from bleak import BleakError
 from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
 
@@ -36,7 +35,6 @@ def _make_flow() -> AiperConfigFlow:
 
 
 class TestBluetoothDiscovery:
-    @pytest.mark.asyncio
     async def test_sets_unique_id_and_context(self):
         flow = _make_flow()
         discovery = _make_discovery_info()
@@ -56,7 +54,6 @@ class TestBluetoothDiscovery:
         assert flow._name == "Aiper-WR-1234"
         confirm.assert_called_once()
 
-    @pytest.mark.asyncio
     async def test_uses_address_when_name_missing(self):
         flow = _make_flow()
         discovery = _make_discovery_info(name=None)
@@ -76,7 +73,6 @@ class TestBluetoothDiscovery:
 
 
 class TestConfirmStep:
-    @pytest.mark.asyncio
     async def test_shows_form_on_none_input(self):
         flow = _make_flow()
         flow._name = "Test Device"
@@ -94,7 +90,6 @@ class TestConfirmStep:
 
         assert result["type"] == "form"
 
-    @pytest.mark.asyncio
     async def test_creates_entry_on_successful_connect(self):
         flow = _make_flow()
         flow._name = "Test Device"
@@ -115,7 +110,6 @@ class TestConfirmStep:
         mock_client.disconnect.assert_called_once()
         assert result["type"] == "create_entry"
 
-    @pytest.mark.asyncio
     async def test_shows_error_on_connect_failure(self):
         flow = _make_flow()
         flow._name = "Test Device"
@@ -141,7 +135,6 @@ class TestConfirmStep:
 
         assert result["errors"]["base"] == "cannot_connect"
 
-    @pytest.mark.asyncio
     async def test_shows_error_on_timeout(self):
         flow = _make_flow()
         flow._name = "Test Device"
@@ -169,7 +162,6 @@ class TestConfirmStep:
 
 
 class TestUserStep:
-    @pytest.mark.asyncio
     async def test_aborts_when_no_devices(self):
         flow = _make_flow()
 
@@ -187,7 +179,6 @@ class TestUserStep:
 
 
 class TestReauthStep:
-    @pytest.mark.asyncio
     async def test_reauth_shows_form(self):
         flow = _make_flow()
 
@@ -201,7 +192,6 @@ class TestReauthStep:
         assert result["type"] == "form"
         assert flow._address == "AA:BB:CC:DD:EE:FF"
 
-    @pytest.mark.asyncio
     async def test_reauth_confirm_updates_entry(self):
         flow = _make_flow()
         flow._address = "AA:BB:CC:DD:EE:FF"
@@ -225,7 +215,6 @@ class TestReauthStep:
 
 
 class TestOptionsFlow:
-    @pytest.mark.asyncio
     async def test_shows_form_on_none_input(self):
         handler = AiperOptionsFlowHandler()
         mock_entry = MagicMock()
@@ -243,7 +232,6 @@ class TestOptionsFlow:
 
         assert result["type"] == "form"
 
-    @pytest.mark.asyncio
     async def test_creates_entry_with_data(self):
         handler = AiperOptionsFlowHandler()
 

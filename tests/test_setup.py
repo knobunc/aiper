@@ -2,8 +2,6 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from custom_components.aiper import async_setup_entry, async_unload_entry
 from custom_components.aiper.const import CONF_ADDRESS, PLATFORMS
 
@@ -26,7 +24,6 @@ def _make_hass() -> MagicMock:
 
 
 class TestSetupEntry:
-    @pytest.mark.asyncio
     async def test_creates_coordinator_and_forwards_platforms(self):
         hass = _make_hass()
         entry = _make_entry()
@@ -49,7 +46,6 @@ class TestSetupEntry:
 
 
 class TestUnloadEntry:
-    @pytest.mark.asyncio
     async def test_unloads_platforms(self):
         hass = _make_hass()
         entry = _make_entry()
