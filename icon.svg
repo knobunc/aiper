@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2196F3"/>
+      <stop offset="100%" style="stop-color:#0D47A1"/>
+    </linearGradient>
+    <linearGradient id="drop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#BBDEFB"/>
+      <stop offset="100%" style="stop-color:#64B5F6"/>
+    </linearGradient>
+    <linearGradient id="grass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#66BB6A"/>
+      <stop offset="100%" style="stop-color:#2E7D32"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="90" ry="90" fill="url(#bg)"/>
+  <!-- Ground / grass strip -->
+  <path d="M0 380 Q128 350 256 370 Q384 390 512 360 L512 512 Q512 512 422 512 L90 512 Q0 512 0 422 Z" fill="url(#grass)" opacity="0.85"/>
+  <!-- Sprinkler head (small circle on a stick) -->
+  <rect x="248" y="280" width="16" height="95" rx="5" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="256" cy="272" r="20" fill="#FFFFFF" opacity="0.95"/>
+  <circle cx="256" cy="272" r="10" fill="url(#bg)"/>
+  <!-- Water spray arcs - left side -->
+  <path d="M246 262 Q200 180 130 200" stroke="url(#drop)" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M242 268 Q190 210 110 250" stroke="url(#drop)" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M240 274 Q185 245 100 300" stroke="url(#drop)" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <!-- Water spray arcs - right side -->
+  <path d="M266 262 Q312 180 382 200" stroke="url(#drop)" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M270 268 Q322 210 402 250" stroke="url(#drop)" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M272 274 Q327 245 412 300" stroke="url(#drop)" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <!-- Water droplets -->
+  <ellipse cx="140" cy="215" rx="8" ry="11" fill="url(#drop)" opacity="0.8"/>
+  <ellipse cx="108" cy="270" rx="7" ry="10" fill="url(#drop)" opacity="0.7"/>
+  <ellipse cx="95" cy="320" rx="6" ry="9" fill="url(#drop)" opacity="0.6"/>
+  <ellipse cx="375" cy="215" rx="8" ry="11" fill="url(#drop)" opacity="0.8"/>
+  <ellipse cx="405" cy="270" rx="7" ry="10" fill="url(#drop)" opacity="0.7"/>
+  <ellipse cx="418" cy="320" rx="6" ry="9" fill="url(#drop)" opacity="0.6"/>
+  <!-- Small grass blades -->
+  <path d="M150 375 Q155 340 160 375" stroke="#43A047" stroke-width="4" fill="none"/>
+  <path d="M200 368 Q207 330 214 368" stroke="#43A047" stroke-width="4" fill="none"/>
+  <path d="M310 372 Q317 335 324 372" stroke="#43A047" stroke-width="4" fill="none"/>
+  <path d="M370 365 Q377 330 384 365" stroke="#43A047" stroke-width="4" fill="none"/>
+</svg>
