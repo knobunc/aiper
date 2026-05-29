@@ -366,7 +366,12 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
             return result
         except (BleakError, TimeoutError, DeviceUnavailable) as err:
             raise HomeAssistantError(
-                f"Failed to send {cmd} to {self._address}: {err}"
+                translation_domain=DOMAIN,
+                translation_key="send_command_failed",
+                translation_placeholders={
+                    "command": cmd,
+                    "address": self._address,
+                },
             ) from err
         finally:
             await self._client.disconnect()

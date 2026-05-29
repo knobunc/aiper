@@ -119,7 +119,7 @@ class IrriSenseSenseSwitch(IrriSenseEntity, SwitchEntity):
 class IrriSensePlanSwitch(IrriSenseEntity, SwitchEntity):
     """Switch to enable/disable an irrigation plan."""
 
-    _attr_icon = "mdi:calendar-clock"
+    _attr_translation_key = "plan"
 
     def __init__(
         self,
@@ -177,7 +177,6 @@ class IrriSensePlanSwitch(IrriSenseEntity, SwitchEntity):
 class IrriSenseAllSchedulesSwitch(IrriSenseEntity, SwitchEntity):
     """Switch to enable/disable all irrigation plans."""
 
-    _attr_icon = "mdi:calendar-check"
     _attr_translation_key = "all_schedules"
 
     def __init__(self, coordinator: IrriSenseCoordinator) -> None:

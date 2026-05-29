@@ -1,0 +1,32 @@
+{
+  "entity": {
+    "sensor": {
+      "status": {"default": "mdi:sprinkler"},
+      "current_zone": {"default": "mdi:map-marker"},
+      "run_time": {"default": "mdi:timer-outline"},
+      "progress": {"default": "mdi:percent"},
+      "water_pressure": {"default": "mdi:gauge"},
+      "firmware": {"default": "mdi:chip"},
+      "next_run": {"default": "mdi:calendar-clock"},
+      "valve": {"default": "mdi:valve"},
+      "model": {"default": "mdi:information-outline"},
+      "serial": {"default": "mdi:barcode"},
+      "latitude": {"default": "mdi:latitude"},
+      "longitude": {"default": "mdi:longitude"},
+      "rssi": {"default": "mdi:bluetooth"}
+    },
+    "binary_sensor": {
+      "irrigating": {"default": "mdi:sprinkler-variant"},
+      "rain_detected": {"default": "mdi:weather-rainy"},
+      "water_shortage": {"default": "mdi:water-off"},
+      "connected": {"default": "mdi:bluetooth-connect"}
+    },
+    "switch": {
+      "rain_sensor": {"default": "mdi:weather-rainy"},
+      "weather_rain": {"default": "mdi:cloud-alert"},
+      "weather_wind": {"default": "mdi:weather-windy"},
+      "all_schedules": {"default": "mdi:calendar-check"},
+      "plan": {"default": "mdi:calendar-clock"}
+    }
+  }
+}

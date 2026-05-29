@@ -35,6 +35,17 @@
       }
     }
   },
+  "exceptions": {
+    "send_command_failed": {
+      "message": "Failed to send {command} to {address}"
+    },
+    "device_not_found": {
+      "message": "Device {device_id} not found"
+    },
+    "coordinator_not_found": {
+      "message": "No Aiper coordinator for device {device_id}"
+    }
+  },
   "entity": {
     "sensor": {
       "status": {"name": "Status"},
