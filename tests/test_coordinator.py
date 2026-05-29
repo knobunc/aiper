@@ -1,8 +1,13 @@
 """Tests for coordinator state parsing and data models."""
 
+from unittest.mock import AsyncMock
+
+import pytest
+
 from custom_components.aiper.coordinator import (
     IrriSenseCoordinator,
     IrriSensePlan,
+    IrriSensePoint,
     IrriSenseState,
     IrriSenseZone,
 )
@@ -238,3 +243,63 @@ class TestAvailabilityTracking:
         coord = _make_coordinator()
         coord._consecutive_failures = 5
         assert coord._consecutive_failures == 5
+
+
+class TestFetchZonePoints:
+    @pytest.mark.asyncio
+    async def test_fetches_points_for_each_zone(self):
+        coord = _make_coordinator()
+        coord._state.zones = [
+            IrriSenseZone(id=1, name="Front", type=0, point_total=2),
+            IrriSenseZone(id=2, name="Back", type=0, point_total=1),
+        ]
+
+        responses = [
+            {"data": {"point_info": {
+                "x": 10, "y": 20, "valve": 1,
+                "rotate": 0, "waterpress": 1.5, "num": 0,
+            }}},
+            {"data": {"point_info": {
+                "x": 30, "y": 40, "valve": 2,
+                "rotate": 90, "waterpress": 2.0, "num": 1,
+            }}},
+            {"data": {"point_info": {
+                "x": 50, "y": 60, "valve": 1,
+                "rotate": 0, "waterpress": 1.0, "num": 0,
+            }}},
+        ]
+
+        client = AsyncMock()
+        client.send_command = AsyncMock(side_effect=responses)
+
+        await coord._fetch_zone_points(client)
+
+        assert len(coord._state.zones[0].points) == 2
+        assert coord._state.zones[0].points[0] == IrriSensePoint(
+            x=10, y=20, valve=1, rotate=0, water_pressure=1.5, num=0,
+        )
+        assert coord._state.zones[0].points[1].x == 30
+        assert len(coord._state.zones[1].points) == 1
+        assert coord._state.zones[1].points[0].x == 50
+
+    @pytest.mark.asyncio
+    async def test_skips_missing_response(self):
+        coord = _make_coordinator()
+        coord._state.zones = [
+            IrriSenseZone(id=1, name="Front", type=0, point_total=2),
+        ]
+
+        responses = [
+            {"data": {"point_info": {
+                "x": 10, "y": 20, "valve": 0,
+                "rotate": 0, "waterpress": 0.0, "num": 0,
+            }}},
+            None,
+        ]
+
+        client = AsyncMock()
+        client.send_command = AsyncMock(side_effect=responses)
+
+        await coord._fetch_zone_points(client)
+
+        assert len(coord._state.zones[0].points) == 1

@@ -21,6 +21,12 @@
       "water_shortage": {"default": "mdi:water-off"},
       "connected": {"default": "mdi:bluetooth-connect"}
     },
+    "number": {
+      "map_rotation": {"default": "mdi:compass-outline"}
+    },
+    "image": {
+      "map": {"default": "mdi:map"}
+    },
     "switch": {
       "rain_sensor": {"default": "mdi:weather-rainy"},
       "weather_rain": {"default": "mdi:cloud-alert"},

@@ -5,7 +5,13 @@ from homeassistant.const import Platform
 DOMAIN = "aiper"
 MANUFACTURER = "Aiper"
 
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
+PLATFORMS = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.SWITCH,
+    Platform.NUMBER,
+    Platform.IMAGE,
+]
 
 # Nordic UART Service UUIDs
 NUS_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"

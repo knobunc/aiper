@@ -82,6 +82,12 @@
       "weather_rain": {"name": "Use Rain Forecast"},
       "weather_wind": {"name": "Use Wind Forecast"},
       "all_schedules": {"name": "All Schedules"}
+    },
+    "number": {
+      "map_rotation": {"name": "Map Rotation"}
+    },
+    "image": {
+      "map": {"name": "Zone Map"}
     }
   }
 }
