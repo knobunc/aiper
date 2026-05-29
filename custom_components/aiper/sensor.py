@@ -23,6 +23,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
+from homeassistant.util import dt as dt_util
 
 from .coordinator import IrriSenseCoordinator, IrriSenseState
 from .entity import IrriSenseEntity
@@ -32,9 +33,9 @@ type AiperConfigEntry = ConfigEntry[IrriSenseCoordinator]
 WEEKDAY_MAP = {1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6}
 
 
-def _compute_next_run(state: IrriSenseState) -> str | None:
+def _compute_next_run(state: IrriSenseState) -> datetime | None:
     """Compute the next scheduled run time from enabled plans."""
-    now = datetime.now()
+    now = dt_util.now()
     nearest: datetime | None = None
 
     for plan in state.plans:
@@ -59,16 +60,14 @@ def _compute_next_run(state: IrriSenseState) -> str | None:
                         nearest = run_time
                     break
 
-    if nearest is None:
-        return None
-    return nearest.isoformat()
+    return nearest
 
 
 @dataclass(frozen=True, kw_only=True)
 class IrriSenseSensorDescription(SensorEntityDescription):
     """Sensor description with a value extraction function."""
 
-    value_fn: Callable[[IrriSenseState], StateType]
+    value_fn: Callable[[IrriSenseState], StateType | datetime]
 
 
 SENSOR_DESCRIPTIONS: tuple[IrriSenseSensorDescription, ...] = (
@@ -172,5 +171,5 @@ class IrriSenseSensor(IrriSenseEntity, SensorEntity):
         self._attr_unique_id = f"{coordinator.address}-{description.key}"
 
     @property
-    def native_value(self) -> StateType:
+    def native_value(self) -> StateType | datetime:
         return self.entity_description.value_fn(self.coordinator.data)
