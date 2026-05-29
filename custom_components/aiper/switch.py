@@ -35,7 +35,7 @@ def _plan_display_name(plan: IrriSensePlan) -> str:
     if plan.weekdays:
         parts.append(_format_weekdays(plan.weekdays))
     if plan.depth:
-        parts.append(f"{plan.depth}in")
+        parts.append(f"{round(plan.depth, 2)}in")
     return " ".join(parts)
 
 type AiperConfigEntry = ConfigEntry[IrriSenseCoordinator]
@@ -152,7 +152,7 @@ class IrriSensePlanSwitch(IrriSenseEntity, SwitchEntity):
             "start_time": plan.start_time,
             "weekdays": _format_weekdays(plan.weekdays) if plan.weekdays else None,
             "weekdays_raw": plan.weekdays,
-            "depth_inches": plan.depth,
+            "depth_inches": round(plan.depth, 2),
             "point_time_minutes": plan.point_time,
             "estimated_time_minutes": plan.estimated_time,
             "repeat_type": plan.repeat_type,
