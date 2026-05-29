@@ -156,7 +156,7 @@ Actions mirror the [vacuum integration's action list](https://www.home-assistant
 | `aiper.start` | `vacuum.start` | `setWorkMode` mode=1, status=1 | Start or resume irrigation |
 | `aiper.stop` | `vacuum.stop` | `setWorkMode` mode=0, status=0 | Stop current irrigation |
 | `aiper.pause` | `vacuum.pause` | `setWorkMode` mode=0, status=0 | Pause irrigation (device treats as stop) |
-| `aiper.water_area` | `vacuum.clean_area` | `setWorkMode` per segment | Irrigate specific zones via area mapping |
+| `aiper.water_area` | `vacuum.clean_area` | `setWorkMode` per segment | Irrigate specific zones via area mapping (see parameters below) |
 | `aiper.turn_on` | `vacuum.turn_on` | `WrPlanBatchEdit` enable all | Enable all schedules |
 | `aiper.turn_off` | `vacuum.turn_off` | `WrPlanBatchEdit` disable all | Disable all schedules |
 | `aiper.toggle` | `vacuum.toggle` | — | Toggle between turn_on / turn_off |
@@ -185,6 +185,16 @@ class IrriSenseEntityFeature(IntFlag):
     TOGGLE = 64
     SEND_COMMAND = 128
 ```
+
+#### `water_area` Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `segment_ids` | list[str] | Yes (or via area target) | — | Zone IDs to irrigate |
+| `water_yield` | float | No | 0.25 | Water yield rate: `0.1`, `0.25`, or `0.5` |
+| `point_time` | int | No | 1 | Minutes per point (type 2 maps only): `1`, `5`, or `10` |
+
+The integration sends a `setWorkMode` command per segment with `mode=0` (normal, no pesticide) and `status=1` (start). Pesticide-related fields (`pesticides_sn`, `used_amount`, `mode=1`) are out of scope for v1.
 
 #### Zone Segments (modeled after `vacuum.clean_area`)
 
