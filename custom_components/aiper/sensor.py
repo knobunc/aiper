@@ -119,6 +119,7 @@ SENSOR_DESCRIPTIONS: tuple[IrriSenseSensorDescription, ...] = (
         key="valve",
         translation_key="valve",
         state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda s: s.valve,
     ),
     IrriSenseSensorDescription(

@@ -69,11 +69,16 @@ class IrriSenseState:
     rotate: int = 0
     water_pressure: float = 0.0
 
-    # workInfo (during irrigation)
+    # workInfo / realTimeProgress (during irrigation)
     current_zone: str | None = None
     current_zone_id: int | None = None
     run_time: int = 0
     progress: int = 0
+    position_x: int | None = None
+    position_y: int | None = None
+    water_yield: float | None = None
+    point_time: int | None = None
+    current_plan_id: int | None = None
 
     # Alarm
     warn_code: int = 0
@@ -197,6 +202,11 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
             self._state.current_zone_id = None
             self._state.run_time = 0
             self._state.progress = 0
+            self._state.position_x = None
+            self._state.position_y = None
+            self._state.water_yield = None
+            self._state.point_time = None
+            self._state.current_plan_id = None
 
     def _apply_dev_info(self, data: dict[str, Any]) -> None:
         self._state.model = data.get("model", self._state.model)
@@ -296,6 +306,11 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
             self._state.is_irrigating = data.get("status", 0) == 1
             self._state.run_time = data.get("time", 0)
             self._state.progress = data.get("progress", 0)
+            self._state.position_x = data.get("x")
+            self._state.position_y = data.get("y")
+            self._state.water_yield = data.get("waterYield")
+            self._state.point_time = data.get("point_time")
+            self._state.current_plan_id = data.get("plan_id")
             map_info = data.get("map_info", {})
             if map_info:
                 self._state.current_zone = map_info.get("name")

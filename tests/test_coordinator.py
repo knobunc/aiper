@@ -54,6 +54,11 @@ class TestApplyWorkInfo:
         assert coord._state.water_pressure == 2.5
         assert coord._state.current_zone is None
         assert coord._state.run_time == 0
+        assert coord._state.position_x is None
+        assert coord._state.position_y is None
+        assert coord._state.water_yield is None
+        assert coord._state.point_time is None
+        assert coord._state.current_plan_id is None
 
     def test_irrigating(self):
         coord = _make_coordinator()
@@ -168,6 +173,11 @@ class TestProcessUnsolicited:
                 "time": 120,
                 "progress": 45,
                 "map_info": {"name": "Back Yard", "id": 3},
+                "x": -288,
+                "y": 1123,
+                "waterYield": 0.25,
+                "point_time": 99,
+                "plan_id": 2,
             },
         })
         assert coord._state.is_irrigating is True
@@ -175,6 +185,11 @@ class TestProcessUnsolicited:
         assert coord._state.progress == 45
         assert coord._state.current_zone == "Back Yard"
         assert coord._state.current_zone_id == 3
+        assert coord._state.position_x == -288
+        assert coord._state.position_y == 1123
+        assert coord._state.water_yield == 0.25
+        assert coord._state.point_time == 99
+        assert coord._state.current_plan_id == 2
 
     def test_abnormal_reminder_rain(self):
         coord = _make_coordinator()
