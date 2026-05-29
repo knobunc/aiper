@@ -19,7 +19,7 @@ class IrriSenseEntity(CoordinatorEntity[IrriSenseCoordinator]):
         self._attr_device_info = DeviceInfo(
             connections={(CONNECTION_BLUETOOTH, coordinator.address)},
             identifiers={(DOMAIN, coordinator.address)},
-            name=f"IrriSense {coordinator.data.serial or coordinator.address[-8:]}",
+            name=coordinator.config_entry.title,
             manufacturer=MANUFACTURER,
             model=coordinator.data.model or "IrriSense 2",
             sw_version=coordinator.data.firmware or None,
