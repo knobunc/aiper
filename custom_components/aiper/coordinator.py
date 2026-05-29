@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any
 
-from bleak import BleakError
+from bleak.exc import BleakError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError

@@ -52,7 +52,8 @@ def _find_coordinator(
     for entry_id in device_entry.config_entries:
         entry = hass.config_entries.async_get_entry(entry_id)
         if entry and entry.domain == DOMAIN and hasattr(entry, "runtime_data"):
-            return entry.runtime_data
+            coordinator: IrriSenseCoordinator = entry.runtime_data
+            return coordinator
 
     raise ServiceValidationError(
         translation_domain=DOMAIN,

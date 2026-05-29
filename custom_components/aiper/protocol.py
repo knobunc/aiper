@@ -39,4 +39,4 @@ def parse_response(raw: bytes) -> dict[str, Any]:
     for key in payload:
         if key not in ("chksum", "res"):
             return {"type": key, "data": payload[key], "res": payload.get("res")}
-    return payload
+    return dict(payload)
