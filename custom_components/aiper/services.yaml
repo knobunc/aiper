@@ -1,0 +1,155 @@
+start:
+  name: Start Irrigation
+  description: Start irrigation on a specific zone.
+  fields:
+    device_id:
+      name: Device
+      required: true
+      selector:
+        device:
+          integration: aiper
+    map_id:
+      name: Zone ID
+      description: Map/zone ID to irrigate.
+      required: true
+      selector:
+        number:
+          min: 1
+          mode: box
+    water_yield:
+      name: Water Yield
+      description: Water yield rate.
+      required: false
+      default: 0.25
+      selector:
+        select:
+          options:
+            - label: "Low (0.1)"
+              value: "0.1"
+            - label: "Medium (0.25)"
+              value: "0.25"
+            - label: "High (0.5)"
+              value: "0.5"
+
+stop:
+  name: Stop Irrigation
+  description: Stop current irrigation.
+  fields:
+    device_id:
+      name: Device
+      required: true
+      selector:
+        device:
+          integration: aiper
+
+pause:
+  name: Pause Irrigation
+  description: Pause irrigation (device treats as stop).
+  fields:
+    device_id:
+      name: Device
+      required: true
+      selector:
+        device:
+          integration: aiper
+
+water_area:
+  name: Water Area
+  description: Irrigate specific zones by segment ID.
+  fields:
+    device_id:
+      name: Device
+      required: true
+      selector:
+        device:
+          integration: aiper
+    segment_ids:
+      name: Zone IDs
+      description: Comma-separated zone/map IDs to irrigate.
+      required: true
+      selector:
+        text:
+    water_yield:
+      name: Water Yield
+      description: Water yield rate.
+      required: false
+      default: 0.25
+      selector:
+        select:
+          options:
+            - label: "Low (0.1)"
+              value: "0.1"
+            - label: "Medium (0.25)"
+              value: "0.25"
+            - label: "High (0.5)"
+              value: "0.5"
+    point_time:
+      name: Point Time
+      description: Minutes per point (type 2 maps only).
+      required: false
+      default: 1
+      selector:
+        select:
+          options:
+            - label: "1 minute"
+              value: "1"
+            - label: "5 minutes"
+              value: "5"
+            - label: "10 minutes"
+              value: "10"
+
+turn_on:
+  name: Enable All Schedules
+  description: Enable all irrigation schedules.
+  fields:
+    device_id:
+      name: Device
+      required: true
+      selector:
+        device:
+          integration: aiper
+
+turn_off:
+  name: Disable All Schedules
+  description: Disable all irrigation schedules.
+  fields:
+    device_id:
+      name: Device
+      required: true
+      selector:
+        device:
+          integration: aiper
+
+toggle:
+  name: Toggle Schedules
+  description: Toggle all schedules on or off.
+  fields:
+    device_id:
+      name: Device
+      required: true
+      selector:
+        device:
+          integration: aiper
+
+send_command:
+  name: Send Command
+  description: Send a raw BLE command to the device.
+  fields:
+    device_id:
+      name: Device
+      required: true
+      selector:
+        device:
+          integration: aiper
+    command:
+      name: Command
+      description: BLE command name (e.g., DevInfo, workInfo).
+      required: true
+      selector:
+        text:
+    data:
+      name: Data
+      description: Optional JSON data for the command.
+      required: false
+      selector:
+        object:

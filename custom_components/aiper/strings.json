@@ -1,0 +1,60 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "confirm": {
+        "description": "Confirm adding {name} ({address})"
+      },
+      "user": {
+        "data": {
+          "address": "Device"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to device"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "no_devices_found": "No Aiper IrriSense devices found",
+      "already_in_progress": "Configuration already in progress"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "idle_poll_interval": "Idle poll interval (seconds)",
+          "active_poll_interval": "Active poll interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {"name": "Status"},
+      "current_zone": {"name": "Current Zone"},
+      "run_time": {"name": "Run Time"},
+      "progress": {"name": "Progress"},
+      "water_pressure": {"name": "Water Pressure"},
+      "firmware": {"name": "Firmware"},
+      "next_run": {"name": "Next Run"},
+      "valve": {"name": "Valve"},
+      "model": {"name": "Model"},
+      "serial": {"name": "Serial Number"},
+      "rssi": {"name": "BLE RSSI"}
+    },
+    "binary_sensor": {
+      "irrigating": {"name": "Irrigating"},
+      "rain_detected": {"name": "Rain Detected"},
+      "water_shortage": {"name": "Water Shortage"},
+      "connected": {"name": "Connected"}
+    },
+    "switch": {
+      "rain_sensor": {"name": "Rain Sensor"},
+      "weather_rain": {"name": "Weather Rain"},
+      "weather_wind": {"name": "Weather Wind"},
+      "all_schedules": {"name": "All Schedules"}
+    }
+  }
+}

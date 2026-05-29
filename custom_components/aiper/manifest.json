@@ -1,0 +1,17 @@
+{
+  "domain": "aiper",
+  "name": "Aiper IrriSense",
+  "bluetooth": [
+    {"local_name": "Aiper-WR-*"},
+    {"local_name": "Aiper_WR_*"},
+    {"local_name": "Aiper-IrriSense*"}
+  ],
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["bluetooth_adapters"],
+  "documentation": "https://github.com/knobunc/aiper",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "requirements": [],
+  "version": "0.1.0"
+}
