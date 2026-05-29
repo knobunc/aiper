@@ -57,6 +57,7 @@ class AiperConfigFlow(ConfigFlow, domain=DOMAIN):
             self._set_confirm_only()
             return self.async_show_form(
                 step_id="confirm",
+                data_schema=vol.Schema({}),
                 description_placeholders={
                     "name": self._name or "Unknown",
                     "address": self._address or "Unknown",
