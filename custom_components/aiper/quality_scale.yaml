@@ -1,0 +1,135 @@
+rules:
+  # Bronze
+  action-setup: done
+  appropriate-polling: done
+  brands: done
+  common-modules: done
+  config-flow-test-coverage: done
+  config-flow: done
+  dependency-transparency: done
+  docs-actions:
+    status: todo
+    comment: |
+      Need to document the start, stop, water_area, and send_command services.
+  docs-high-level-description:
+    status: todo
+    comment: |
+      Need user-facing documentation beyond the README.
+  docs-installation-instructions:
+    status: todo
+    comment: |
+      Need user-facing installation docs.
+  docs-removal-instructions:
+    status: todo
+    comment: |
+      Need user-facing removal docs.
+  entity-event-setup:
+    status: exempt
+    comment: |
+      Entities use CoordinatorEntity and do not subscribe to events directly.
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup: done
+  unique-config-entry: done
+
+  # Silver
+  action-exceptions: done
+  config-entry-unloading: done
+  docs-configuration-parameters:
+    status: todo
+    comment: |
+      Need to document the idle and active poll interval options.
+  docs-installation-parameters:
+    status: todo
+    comment: |
+      Need to document Bluetooth discovery and manual setup.
+  entity-unavailable: done
+  integration-owner: done
+  log-when-unavailable: done
+  parallel-updates: done
+  reauthentication-flow: done
+  test-coverage: done
+
+  # Gold
+  devices: done
+  diagnostics:
+    status: todo
+    comment: |
+      Need to add a diagnostics.py platform.
+  discovery-update-info:
+    status: todo
+    comment: |
+      Need to update device info on Bluetooth rediscovery.
+  discovery: done
+  docs-data-update:
+    status: todo
+    comment: |
+      Need to document the connect-poll-disconnect BLE cycle.
+  docs-examples:
+    status: todo
+    comment: |
+      Need to add automation examples.
+  docs-known-limitations:
+    status: todo
+    comment: |
+      Need to document BLE range limitations and single-connection constraint.
+  docs-supported-devices:
+    status: todo
+    comment: |
+      Need to list supported Aiper IrriSense models.
+  docs-supported-functions:
+    status: todo
+    comment: |
+      Need to document sensors, switches, and services.
+  docs-troubleshooting:
+    status: todo
+    comment: |
+      Need to document BLE connectivity troubleshooting.
+  docs-use-cases:
+    status: todo
+    comment: |
+      Need to document irrigation scheduling and monitoring use cases.
+  dynamic-devices:
+    status: exempt
+    comment: |
+      Each config entry corresponds to a single BLE device.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default:
+    status: todo
+    comment: |
+      Consider disabling diagnostic sensors by default.
+  entity-translations: done
+  exception-translations:
+    status: todo
+    comment: |
+      Need to add translation keys for exception messages.
+  icon-translations:
+    status: todo
+    comment: |
+      Need to add icon translations for entities.
+  reconfiguration-flow:
+    status: todo
+    comment: |
+      Need to add async_step_reconfigure for address changes.
+  repair-issues:
+    status: exempt
+    comment: |
+      No cases where raising a repair issue is appropriate.
+  stale-devices:
+    status: exempt
+    comment: |
+      Each config entry is a single device; removing the entry removes the device.
+
+  # Platinum
+  async-dependency: done
+  inject-websession:
+    status: exempt
+    comment: |
+      This is a BLE integration that does not make HTTP requests.
+  strict-typing:
+    status: todo
+    comment: |
+      Need to add py.typed marker and full strict type annotations.
