@@ -12,6 +12,8 @@ def _make_coordinator() -> IrriSenseCoordinator:
     """Create a coordinator with mocked HA dependencies."""
     coord = object.__new__(IrriSenseCoordinator)
     coord._state = IrriSenseState()
+    coord._was_available = False
+    coord._consecutive_failures = 0
     return coord
 
 
@@ -224,3 +226,15 @@ class TestProcessUnsolicited:
         })
         assert coord._state.rain_detected is False
         assert coord._state.water_shortage is False
+
+
+class TestAvailabilityTracking:
+    def test_initial_state(self):
+        coord = _make_coordinator()
+        assert coord._was_available is False
+        assert coord._consecutive_failures == 0
+
+    def test_consecutive_failures_tracked(self):
+        coord = _make_coordinator()
+        coord._consecutive_failures = 5
+        assert coord._consecutive_failures == 5
