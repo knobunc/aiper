@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 from bleak import BleakClient, BleakError
+from bleak_retry_connector import establish_connection
 from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant
 
@@ -65,8 +66,9 @@ class IrriSenseClient:
         if service_info:
             self._rssi = service_info.rssi
 
-        self._client = BleakClient(ble_device, timeout=30.0)
-        await self._client.connect()
+        self._client = await establish_connection(
+            BleakClient, ble_device, self._address, max_attempts=3
+        )
 
         self._buffer.clear()
         self._unsolicited.clear()
