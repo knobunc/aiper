@@ -12,3 +12,4 @@ select = ["E", "F", "W", "I"]
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
+strict = true

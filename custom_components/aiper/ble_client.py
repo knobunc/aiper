@@ -6,7 +6,8 @@ import asyncio
 import logging
 from typing import Any
 
-from bleak import BleakClient, BleakError
+from bleak import BleakClient
+from bleak.exc import BleakError
 from bleak_retry_connector import establish_connection
 from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant

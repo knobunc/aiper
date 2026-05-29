@@ -214,6 +214,87 @@ class TestReauthStep:
         )
 
 
+class TestReconfigureStep:
+    async def test_reconfigure_shows_device_list(self):
+        flow = _make_flow()
+        info = _make_discovery_info()
+
+        with (
+            patch(PATCH_DISCO, return_value=[info]),
+            patch.object(
+                flow, "async_show_form", return_value={"type": "form"}
+            ) as mock_form,
+        ):
+            result = await flow.async_step_reconfigure(None)
+
+        assert result["type"] == "form"
+        mock_form.assert_called_once()
+
+    async def test_reconfigure_aborts_when_no_devices(self):
+        flow = _make_flow()
+
+        with (
+            patch(PATCH_DISCO, return_value=[]),
+            patch.object(
+                flow, "async_abort", return_value={"type": "abort"}
+            ) as mock_abort,
+        ):
+            await flow.async_step_reconfigure(None)
+
+        mock_abort.assert_called_once_with(reason="no_devices_found")
+
+    async def test_reconfigure_confirm_success(self):
+        flow = _make_flow()
+        flow._address = "AA:BB:CC:DD:EE:FF"
+        flow._name = "Test Device"
+
+        mock_client = AsyncMock()
+        mock_entry = MagicMock()
+        with (
+            patch(PATCH_BLEAK, return_value=mock_client),
+            patch.object(
+                flow, "_get_reconfigure_entry", return_value=mock_entry
+            ),
+            patch.object(
+                flow,
+                "async_update_reload_and_abort",
+                return_value={"type": "abort"},
+            ) as mock_update,
+        ):
+            await flow.async_step_reconfigure_confirm({"confirm": True})
+
+        mock_client.connect.assert_called_once_with(timeout=10)
+        mock_client.disconnect.assert_called_once()
+        mock_update.assert_called_once_with(
+            mock_entry, data={CONF_ADDRESS: "AA:BB:CC:DD:EE:FF"}
+        )
+
+    async def test_reconfigure_confirm_connect_failure(self):
+        flow = _make_flow()
+        flow._address = "AA:BB:CC:DD:EE:FF"
+        flow._name = "Test Device"
+
+        mock_client = AsyncMock()
+        mock_client.connect.side_effect = BleakError("No device")
+        error_result = {
+            "type": "form",
+            "errors": {"base": "cannot_connect"},
+        }
+
+        with (
+            patch(PATCH_BLEAK, return_value=mock_client),
+            patch.object(flow, "_set_confirm_only"),
+            patch.object(
+                flow, "async_show_form", return_value=error_result
+            ),
+        ):
+            result = await flow.async_step_reconfigure_confirm(
+                {"confirm": True}
+            )
+
+        assert result["errors"]["base"] == "cannot_connect"
+
+
 class TestOptionsFlow:
     async def test_shows_form_on_none_input(self):
         handler = AiperOptionsFlowHandler()

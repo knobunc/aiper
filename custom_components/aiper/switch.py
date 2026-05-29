@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
@@ -14,7 +15,7 @@ from .const import (
     SENSE_TYPE_WEATHER_RAIN,
     SENSE_TYPE_WEATHER_WIND,
 )
-from .coordinator import IrriSenseCoordinator, IrriSensePlan
+from .coordinator import IrriSenseCoordinator, IrriSensePlan, IrriSenseState
 from .entity import IrriSenseEntity
 
 PARALLEL_UPDATES = 0
@@ -97,7 +98,7 @@ class IrriSenseSenseSwitch(IrriSenseEntity, SwitchEntity):
         coordinator: IrriSenseCoordinator,
         key: str,
         sense_type: int,
-        value_fn,
+        value_fn: Callable[[IrriSenseState], bool],
     ) -> None:
         super().__init__(coordinator)
         self._sense_type = sense_type
@@ -107,7 +108,7 @@ class IrriSenseSenseSwitch(IrriSenseEntity, SwitchEntity):
 
     @property
     def is_on(self) -> bool:
-        return self._value_fn(self.coordinator.data)
+        return bool(self._value_fn(self.coordinator.data))
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self.coordinator.async_set_sense_switch(self._sense_type, True)
@@ -119,7 +120,7 @@ class IrriSenseSenseSwitch(IrriSenseEntity, SwitchEntity):
 class IrriSensePlanSwitch(IrriSenseEntity, SwitchEntity):
     """Switch to enable/disable an irrigation plan."""
 
-    _attr_icon = "mdi:calendar-clock"
+    _attr_translation_key = "plan"
 
     def __init__(
         self,
@@ -177,7 +178,6 @@ class IrriSensePlanSwitch(IrriSenseEntity, SwitchEntity):
 class IrriSenseAllSchedulesSwitch(IrriSenseEntity, SwitchEntity):
     """Switch to enable/disable all irrigation plans."""
 
-    _attr_icon = "mdi:calendar-check"
     _attr_translation_key = "all_schedules"
 
     def __init__(self, coordinator: IrriSenseCoordinator) -> None:

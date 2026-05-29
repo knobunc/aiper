@@ -6,12 +6,18 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from bleak import BleakClient, BleakError
+from bleak import BleakClient
+from bleak.exc import BleakError
 from homeassistant.components.bluetooth import (
     BluetoothServiceInfoBleak,
     async_discovered_service_info,
 )
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.core import callback
 
 from .const import (
@@ -41,7 +47,9 @@ class AiperConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle Bluetooth discovery."""
         await self.async_set_unique_id(discovery_info.address.upper())
-        self._abort_if_unique_id_configured()
+        self._abort_if_unique_id_configured(
+            updates={CONF_ADDRESS: discovery_info.address}
+        )
 
         self._discovery_info = discovery_info
         self._address = discovery_info.address
@@ -133,9 +141,69 @@ class AiperConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders={"address": self._address or "Unknown"},
         )
 
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle reconfiguration — allow user to pick a new BLE device."""
+        if user_input is not None:
+            address = user_input[CONF_ADDRESS]
+            self._address = address
+            self._name = f"IrriSense {address}"
+            return await self.async_step_reconfigure_confirm()
+
+        discovered = async_discovered_service_info(self.hass, connectable=True)
+        aiper_devices: dict[str, str] = {}
+        for info in discovered:
+            name = info.name or ""
+            if name.lower().startswith("aiper"):
+                aiper_devices[info.address] = name
+
+        if not aiper_devices:
+            return self.async_abort(reason="no_devices_found")
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {vol.Required(CONF_ADDRESS): vol.In(aiper_devices)}
+            ),
+        )
+
+    async def async_step_reconfigure_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm the reconfigured device connectivity."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                assert self._address is not None
+                client = BleakClient(self._address)
+                await client.connect(timeout=10)
+                await client.disconnect()
+            except (BleakError, TimeoutError, OSError):
+                errors["base"] = "cannot_connect"
+            else:
+                reconfigure_entry = self._get_reconfigure_entry()
+                return self.async_update_reload_and_abort(
+                    reconfigure_entry,
+                    data={CONF_ADDRESS: self._address},
+                )
+
+        self._set_confirm_only()
+        return self.async_show_form(
+            step_id="reconfigure_confirm",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "name": self._name or "Unknown",
+                "address": self._address or "Unknown",
+            },
+            errors=errors,
+        )
+
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> AiperOptionsFlowHandler:
         return AiperOptionsFlowHandler()
 
 

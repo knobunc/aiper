@@ -43,14 +43,23 @@ def _find_coordinator(
     dev_reg = dr.async_get(hass)
     device_entry = dev_reg.async_get(device_id)
     if device_entry is None:
-        raise ServiceValidationError(f"Device {device_id} not found")
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="device_not_found",
+            translation_placeholders={"device_id": device_id},
+        )
 
     for entry_id in device_entry.config_entries:
         entry = hass.config_entries.async_get_entry(entry_id)
         if entry and entry.domain == DOMAIN and hasattr(entry, "runtime_data"):
-            return entry.runtime_data
+            coordinator: IrriSenseCoordinator = entry.runtime_data
+            return coordinator
 
-    raise ServiceValidationError(f"No Aiper coordinator for device {device_id}")
+    raise ServiceValidationError(
+        translation_domain=DOMAIN,
+        translation_key="coordinator_not_found",
+        translation_placeholders={"device_id": device_id},
+    )
 
 
 async def _async_setup_services(hass: HomeAssistant) -> None:
