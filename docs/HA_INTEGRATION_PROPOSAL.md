@@ -142,7 +142,7 @@ A switch entity is created for each irrigation plan configured on the device. Th
   | `zone_id` | int | Target zone identifier |
   | `start_time` | str | Scheduled start time (HH:MM) |
   | `weekdays` | str | Abbreviated schedule (e.g. "MWF", "Daily") |
-  | `weekdays_raw` | list[int] | Raw weekday codes (1=Mon through 7=Sun) |
+  | `weekdays_raw` | list[int] | Raw weekday codes (0=Sun, 1=Mon, ..., 6=Sat) |
   | `depth_inches` | float | Water depth target in inches |
   | `point_time_minutes` | int | Minutes per irrigation point |
   | `estimated_time_minutes` | int | Estimated total run time |

@@ -476,7 +476,7 @@ The app retries each point upload up to **10 times** on failure.
 | `work_ctrl.point_time` | int | Time per point (minutes) |
 | `time_ctrl.start_time` | string | Start time `"HH:MM"` |
 | `time_ctrl.repeat_type` | int | `1` = repeat weekly |
-| `time_ctrl.weekdays` | list[int] | Days of week (1=Mon, 7=Sun) |
+| `time_ctrl.weekdays` | list[int] | Days of week (0=Sun, 1=Mon, ..., 6=Sat) |
 | `enabled` | bool | Whether plan is active |
 | `estimated_time` | int | Estimated runtime (minutes) |
 

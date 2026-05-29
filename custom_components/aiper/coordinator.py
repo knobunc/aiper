@@ -201,10 +201,16 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
         self._state.firmware = data.get("version", self._state.firmware)
 
     def _apply_alarm(self, data: dict[str, Any]) -> None:
-        warn_code = data.get("warnCode", 0)
-        self._state.warn_code = warn_code
-        self._state.rain_detected = bool(warn_code & 0x04)
-        self._state.water_shortage = bool(warn_code & 0x02)
+        if "warnCode" in data:
+            warn_code = data["warnCode"]
+            self._state.warn_code = warn_code
+            self._state.rain_detected = bool(warn_code & 0x04)
+            self._state.water_shortage = bool(warn_code & 0x02)
+        elif "code" in data:
+            codes = data["code"]
+            self._state.rain_detected = 4 in codes
+            self._state.water_shortage = 2 in codes
+            self._state.warn_code = sum(codes) if codes else 0
 
     def _apply_sense_switch(self, data: dict[str, Any]) -> None:
         self._state.rain_sensor = bool(data.get("rainSensing", 1))

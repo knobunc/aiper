@@ -17,12 +17,12 @@ from .const import (
 from .coordinator import IrriSenseCoordinator, IrriSensePlan
 from .entity import IrriSenseEntity
 
-_WEEKDAY_ABBR = {1: "M", 2: "T", 3: "W", 4: "Th", 5: "F", 6: "Sa", 7: "Su"}
+_WEEKDAY_ABBR = {0: "Su", 1: "M", 2: "T", 3: "W", 4: "Th", 5: "F", 6: "Sa"}
 
 
 def _format_weekdays(weekdays: list[int]) -> str:
     """Format weekday list into abbreviated string like MWF or Daily."""
-    if sorted(weekdays) == list(range(1, 8)):
+    if sorted(weekdays) == list(range(7)):
         return "Daily"
     return "".join(_WEEKDAY_ABBR.get(d, "?") for d in sorted(weekdays))
 

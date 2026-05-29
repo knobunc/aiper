@@ -85,31 +85,59 @@ class TestApplyDevInfo:
 
 
 class TestApplyAlarm:
-    def test_rain_only(self):
+    """Test both warnCode (legacy) and code-list (current device) formats."""
+
+    def test_warn_code_rain_only(self):
         coord = _make_coordinator()
         coord._apply_alarm({"warnCode": 0x04})
         assert coord._state.rain_detected is True
         assert coord._state.water_shortage is False
 
-    def test_water_shortage_only(self):
+    def test_warn_code_water_shortage_only(self):
         coord = _make_coordinator()
         coord._apply_alarm({"warnCode": 0x02})
         assert coord._state.rain_detected is False
         assert coord._state.water_shortage is True
 
-    def test_both_alarms(self):
+    def test_warn_code_both_alarms(self):
         coord = _make_coordinator()
         coord._apply_alarm({"warnCode": 0x06})
         assert coord._state.rain_detected is True
         assert coord._state.water_shortage is True
 
-    def test_clear(self):
+    def test_warn_code_clear(self):
         coord = _make_coordinator()
         coord._state.rain_detected = True
         coord._state.water_shortage = True
         coord._apply_alarm({"warnCode": 0})
         assert coord._state.rain_detected is False
         assert coord._state.water_shortage is False
+
+    def test_code_list_empty(self):
+        coord = _make_coordinator()
+        coord._state.rain_detected = True
+        coord._apply_alarm({"code": [], "timestamp": 1780027614000})
+        assert coord._state.rain_detected is False
+        assert coord._state.water_shortage is False
+        assert coord._state.warn_code == 0
+
+    def test_code_list_rain(self):
+        coord = _make_coordinator()
+        coord._apply_alarm({"code": [4], "timestamp": 1780027614000})
+        assert coord._state.rain_detected is True
+        assert coord._state.water_shortage is False
+
+    def test_code_list_water(self):
+        coord = _make_coordinator()
+        coord._apply_alarm({"code": [2], "timestamp": 1780027614000})
+        assert coord._state.rain_detected is False
+        assert coord._state.water_shortage is True
+
+    def test_code_list_both(self):
+        coord = _make_coordinator()
+        coord._apply_alarm({"code": [2, 4], "timestamp": 1780027614000})
+        assert coord._state.rain_detected is True
+        assert coord._state.water_shortage is True
 
 
 class TestApplySenseSwitch:
@@ -165,10 +193,19 @@ class TestProcessUnsolicited:
         })
         assert coord._state.water_shortage is True
 
-    def test_alarm_unsolicited(self):
+    def test_alarm_unsolicited_warn_code(self):
         coord = _make_coordinator()
         coord._process_unsolicited({
             "type": "Alarm",
             "data": {"warnCode": 0x04},
         })
         assert coord._state.rain_detected is True
+
+    def test_alarm_unsolicited_code_list(self):
+        coord = _make_coordinator()
+        coord._process_unsolicited({
+            "type": "Alarm",
+            "data": {"code": [], "timestamp": 1780027614000},
+        })
+        assert coord._state.rain_detected is False
+        assert coord._state.water_shortage is False

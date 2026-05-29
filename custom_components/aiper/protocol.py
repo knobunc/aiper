@@ -31,7 +31,9 @@ def parse_response(raw: bytes) -> dict[str, Any]:
 
     Returns dict with keys: type, data, res.
     """
-    decoded = base64.b64decode(raw.rstrip(b"\n"))
+    stripped = raw.rstrip(b"\n")
+    padding = (4 - len(stripped) % 4) % 4
+    decoded = base64.b64decode(stripped + b"=" * padding)
     decrypted = xor_crypt(decoded)
     payload = json.loads(decrypted.decode("utf-8"))
     for key in payload:
