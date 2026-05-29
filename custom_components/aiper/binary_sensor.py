@@ -11,6 +11,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -46,12 +47,14 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[IrriSenseBinarySensorDescription, ...] = (
         key="water_shortage",
         translation_key="water_shortage",
         device_class=BinarySensorDeviceClass.PROBLEM,
+        entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda s: s.water_shortage,
     ),
     IrriSenseBinarySensorDescription(
         key="connected",
         translation_key="connected",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda s: s.available,
     ),
 )

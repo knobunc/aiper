@@ -54,13 +54,13 @@
     "binary_sensor": {
       "irrigating": {"name": "Irrigating"},
       "rain_detected": {"name": "Rain Detected"},
-      "water_shortage": {"name": "Water Shortage"},
+      "water_shortage": {"name": "Water Flow"},
       "connected": {"name": "Connected"}
     },
     "switch": {
-      "rain_sensor": {"name": "Rain Sensor"},
-      "weather_rain": {"name": "Weather Rain"},
-      "weather_wind": {"name": "Weather Wind"},
+      "rain_sensor": {"name": "Use Rain Sensor"},
+      "weather_rain": {"name": "Use Rain Forecast"},
+      "weather_wind": {"name": "Use Wind Forecast"},
       "all_schedules": {"name": "All Schedules"}
     }
   }
