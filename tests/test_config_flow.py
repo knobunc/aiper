@@ -178,42 +178,6 @@ class TestUserStep:
         )
 
 
-class TestReauthStep:
-    async def test_reauth_shows_form(self):
-        flow = _make_flow()
-
-        with patch.object(
-            flow, "async_show_form", return_value={"type": "form"}
-        ):
-            result = await flow.async_step_reauth(
-                {CONF_ADDRESS: "AA:BB:CC:DD:EE:FF"}
-            )
-
-        assert result["type"] == "form"
-        assert flow._address == "AA:BB:CC:DD:EE:FF"
-
-    async def test_reauth_confirm_updates_entry(self):
-        flow = _make_flow()
-        flow._address = "AA:BB:CC:DD:EE:FF"
-
-        mock_entry = MagicMock()
-        with (
-            patch.object(
-                flow, "_get_reauth_entry", return_value=mock_entry
-            ),
-            patch.object(
-                flow,
-                "async_update_reload_and_abort",
-                return_value={"type": "abort"},
-            ) as mock_update,
-        ):
-            await flow.async_step_reauth_confirm({"confirm": True})
-
-        mock_update.assert_called_once_with(
-            mock_entry, data={CONF_ADDRESS: "AA:BB:CC:DD:EE:FF"}
-        )
-
-
 class TestReconfigureStep:
     async def test_reconfigure_shows_device_list(self):
         flow = _make_flow()

@@ -167,8 +167,6 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
                 self._was_available = False
             else:
                 _LOGGER.debug("BLE connect failed, will retry: %s", err)
-            if self._consecutive_failures >= 10:
-                self.config_entry.async_start_reauth(self.hass)
             self.update_interval = timedelta(seconds=POLL_UNAVAILABLE)
             return self._state
 

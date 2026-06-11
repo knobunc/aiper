@@ -428,6 +428,7 @@ async def interactive_loop(conn: IrriSenseConnection):
 async def main():
     parser = argparse.ArgumentParser(description="IrriSense 2 BLE test — direct local Bluetooth")
     parser.add_argument("--scan-only", action="store_true", help="Only scan for devices, don't connect")
+    parser.add_argument("--probe", action="store_true", help="Probe connection and report exact error (use while phone app is connected)")
     parser.add_argument("--address", default=None, help="BLE MAC address (skip scanning)")
     parser.add_argument("--scan-duration", type=float, default=10.0, help="Scan duration in seconds (default: 10)")
     parser.add_argument("--scan-all", action="store_true", help="Show all BLE devices, not just Aiper")
@@ -465,6 +466,53 @@ async def main():
     kwargs = {}
     if args.adapter:
         kwargs["adapter"] = args.adapter
+
+    if args.probe:
+        print(f"\n--- Probe mode: attempting connection to {ble_address} ---")
+        print("(Connect with the phone app first to test the busy-device case)\n")
+
+        print("Step 1: Scanning to see if device is advertising...")
+        devices = await BleakScanner.discover(timeout=5.0, return_adv=True)
+        found = None
+        for device, adv_data in devices.values():
+            if device.address.upper() == ble_address.upper():
+                found = (device, adv_data)
+                break
+        if found:
+            dev, adv = found
+            name = dev.name or adv.local_name or "(no name)"
+            print(f"  Device IS advertising: {name}  RSSI={adv.rssi}")
+        else:
+            print(f"  Device is NOT advertising (not visible in scan)")
+            print("  This is what happens when the device is off, out of range,")
+            print("  or some BLE peripherals stop advertising when a client is connected.")
+
+        print("\nStep 2: Attempting GATT connection...")
+        client = BleakClient(ble_address, **kwargs)
+        try:
+            await asyncio.wait_for(client.connect(), timeout=15.0)
+            print(f"  Connected successfully! MTU={client.mtu_size}")
+            print("  The device accepted a second connection (phone may have disconnected).")
+            await client.disconnect()
+        except asyncio.TimeoutError:
+            print(f"  TimeoutError: connection attempt timed out after 15s")
+            print(f"  Exception type: asyncio.TimeoutError")
+        except Exception as e:
+            print(f"  Connection failed!")
+            print(f"  Exception type: {type(e).__module__}.{type(e).__qualname__}")
+            print(f"  Exception message: {e}")
+            if hasattr(e, '__cause__') and e.__cause__:
+                print(f"  Caused by: {type(e.__cause__).__qualname__}: {e.__cause__}")
+
+        print("\nStep 3: Summary")
+        if found:
+            print("  Device was visible in scan but connection failed — likely another")
+            print("  client (phone app) is holding the GATT connection.")
+            print("  HA could use this to distinguish 'busy' from 'gone'.")
+        else:
+            print("  Device was not visible in scan — could be off, out of range,")
+            print("  or a peripheral that stops advertising when connected.")
+        return
 
     client = BleakClient(ble_address, **kwargs)
     conn = IrriSenseConnection(client)

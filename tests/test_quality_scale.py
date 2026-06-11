@@ -139,14 +139,7 @@ class TestSilverRules:
 
     def test_reauthentication_flow(self):
         rules = _load_rules()
-        assert _rule_status(rules, "reauthentication-flow") == "done"
-        tree = _parse_module("config_flow.py")
-        assert _has_class_method(
-            tree, "AiperConfigFlow", "async_step_reauth"
-        )
-        assert _has_class_method(
-            tree, "AiperConfigFlow", "async_step_reauth_confirm"
-        )
+        assert _rule_status(rules, "reauthentication-flow") == "exempt"
 
     def test_action_exceptions(self):
         rules = _load_rules()
