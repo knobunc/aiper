@@ -168,7 +168,7 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
             else:
                 _LOGGER.debug("BLE connect failed, will retry: %s", err)
             self.update_interval = timedelta(seconds=POLL_UNAVAILABLE)
-            return self._state
+            raise UpdateFailed(f"Device unavailable: {err}") from err
 
         try:
             self._consecutive_failures = 0
