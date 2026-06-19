@@ -19,7 +19,11 @@ rules:
   has-entity-name: done
   runtime-data: done
   test-before-configure: done
-  test-before-setup: done
+  test-before-setup:
+    status: exempt
+    comment: >-
+      BLE devices are intermittent; blocking startup on first connect
+      slows HA boot.  We load with default state and poll in the background.
   unique-config-entry: done
 
   # Silver

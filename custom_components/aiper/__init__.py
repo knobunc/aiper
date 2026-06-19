@@ -22,11 +22,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiperConfigEntry) -> boo
     """Set up Aiper IrriSense from a config entry."""
     address: str = entry.data[CONF_ADDRESS]
     coordinator = IrriSenseCoordinator(hass, address, entry)
-    await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await _async_setup_services(hass)
+    await coordinator.async_request_refresh()
 
     return True
 

@@ -141,6 +141,7 @@ class IrriSenseCoordinator(DataUpdateCoordinator[IrriSenseState]):
         self._address = address
         self._client = IrriSenseClient(hass, address)
         self._state = IrriSenseState()
+        self.data = self._state
         self._last_zone_discovery: float = 0
         self._plan_update_callback: Callable[[], None] | None = None
         self._was_available: bool = False

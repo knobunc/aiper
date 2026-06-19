@@ -104,9 +104,9 @@ class TestBronzeRules:
 
     def test_test_before_setup(self):
         rules = _load_rules()
-        assert _rule_status(rules, "test-before-setup") == "done"
+        assert _rule_status(rules, "test-before-setup") == "exempt"
         source = (INTEGRATION / "__init__.py").read_text()
-        assert "async_config_entry_first_refresh" in source
+        assert "async_request_refresh" in source
 
     def test_common_modules(self):
         rules = _load_rules()
