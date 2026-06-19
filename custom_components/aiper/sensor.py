@@ -106,12 +106,6 @@ SENSOR_DESCRIPTIONS: tuple[IrriSenseSensorDescription, ...] = (
         value_fn=lambda s: round(s.water_pressure, 1),
     ),
     IrriSenseSensorDescription(
-        key="water_yield",
-        translation_key="water_yield",
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda s: round(s.water_yield, 2) if s.water_yield else 0,
-    ),
-    IrriSenseSensorDescription(
         key="firmware",
         translation_key="firmware",
         entity_category=EntityCategory.DIAGNOSTIC,

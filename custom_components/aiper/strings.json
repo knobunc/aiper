@@ -58,7 +58,6 @@
       "run_time": {"name": "Run Time"},
       "progress": {"name": "Progress"},
       "water_pressure": {"name": "Water Pressure"},
-      "water_yield": {"name": "Water Yield"},
       "firmware": {"name": "Firmware"},
       "next_run": {"name": "Next Run"},
       "valve": {"name": "Valve"},
