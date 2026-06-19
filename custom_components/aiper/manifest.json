@@ -14,5 +14,5 @@
   "integration_type": "device",
   "iot_class": "local_polling",
   "requirements": [],
-  "version": "0.5.4"
+  "version": "0.5.5"
 }
