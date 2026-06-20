@@ -26,7 +26,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiperConfigEntry) -> boo
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await _async_setup_services(hass)
-    await coordinator.async_request_refresh()
+    entry.async_create_background_task(
+        hass, coordinator.async_request_refresh(), f"{DOMAIN}-first-refresh"
+    )
 
     return True
 
