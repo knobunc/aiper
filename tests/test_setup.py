@@ -38,7 +38,7 @@ class TestSetupEntry:
             result = await async_setup_entry(hass, entry)
 
         assert result is True
-        mock_coord.async_request_refresh.assert_called_once()
+        entry.async_create_background_task.assert_called_once()
         hass.config_entries.async_forward_entry_setups.assert_called_once_with(
             entry, PLATFORMS
         )
