@@ -86,7 +86,7 @@ SENSOR_DESCRIPTIONS: tuple[IrriSenseSensorDescription, ...] = (
     IrriSenseSensorDescription(
         key="run_time",
         translation_key="run_time",
-        native_unit_of_measurement=UnitOfTime.MINUTES,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda s: s.run_time if s.is_irrigating else 0,
     ),
